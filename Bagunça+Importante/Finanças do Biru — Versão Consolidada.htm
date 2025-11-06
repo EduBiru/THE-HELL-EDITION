@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)file:///C:/Users/eduu/Desktop/Nova%20pasta%20(2)/financas_full.html -->
+<html lang="pt-BR"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Finanças do Biru — Versão Consolidada</title>
+
+
+<!-- LIBS DE GRÁFICOS E EXPORTAÇÃO -->
+<script src="./Finanças do Biru — Versão Consolidada_files/chart.umd.min.js.download"></script>
+<script src="./Finanças do Biru — Versão Consolidada_files/chartjs-adapter-date-fns.bundle.min.js.download"></script>
+<script src="./Finanças do Biru — Versão Consolidada_files/chartjs-plugin-zoom.min.js.download"></script>
+<script src="./Finanças do Biru — Versão Consolidada_files/jspdf.umd.min.js.download"></script>
+<script src="./Finanças do Biru — Versão Consolidada_files/html2canvas.min.js.download"></script>
+
+
+<!-- ======================================================== -->
+<!-- REMOVIDO: LIBS DO HEATMAP QUEBRADO -->
+<!-- ======================================================== -->
+
+
+<style>
+
+  /* --- Ícones SVG Embutidos --- */  /* Isso substitui todos os emojis por SVGs limpos, como solicitado */
+  .icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    stroke-width: 0;
+    stroke: currentColor;
+    fill: currentColor;
+    vertical-align: middle;
+    margin-bottom: 0.125em;
+  }
+  .icon-sm { width: 0.9em; height: 0.9em; }
+  .icon-lg { width: 1.25em; height: 1.25em; }
+
+  /* --- Estilo Base (Consolidado) --- */
+  :root{
+    --bg:#071428; --card:#0d1b2a; --muted:#94a3b8; --accent:#3B82F6; --panel:#081223;
+    --glass: rgba(255,255,255,0.02);
+    --text: #e6eef8;
+    --green: #10B981;
+    --red: #EF4444;
+    --orange: #F59E0B;
+    --cyan: #06B6D4;
+    --chart-line: #38BDF8;
+    --chart-grid: rgba(255, 255, 255, 0.05);
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+  body.light{
+    --bg:#f6f7fb; --card:#ffffff; --muted:#475569; --accent:#2563eb; --panel:#ffffff; --glass: rgba(0,0,0,0.03);
+    --text: #0b1220;
+    color: #0b1220;
+    --chart-line: #0EA5E9;
+    --chart-grid: rgba(0, 0, 0, 0.05);
+    --orange: #D97706;
+    --cyan: #0891B2;
+  }
+  *{ box-sizing:border-box; }
+  ::selection { background-color: var(--accent); color: white; }
+
+  body{
+    margin:0; font-family: var(--font-sans); color:var(--text); background:var(--bg);
+    -webkit-font-smoothing:antialiased; transition: background 0.2s, color 0.2s;
+  }
+  main { max-width:1400px; margin: 1.5rem auto; padding: 0 1.5rem; }
+  h1, h2, h3 { margin: 0; font-weight: 600; }
+  h3 { font-size: 1.1rem; margin-bottom: 1rem; }
+  p { line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+
+  .grid-layout { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+  /* Adicionado para garantir que os itens dentro do grid se estiquem igualmente */
+  .grid-layout.summary-grid {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .grid-layout.summary-grid > .card {
+    flex: 1 1 0; /* Faz os cards crescerem igualmente */
+    min-width: 220px; /* Evita que fiquem muito pequenos */
+  }
+
+  .span-12 { grid-column: span 12 / span 12; }
+  .span-8 { grid-column: span 8 / span 8; }
+  .span-6 { grid-column: span 6 / span 6; }
+  .span-4 { grid-column: span 4 / span 4; }
+  .span-3 { grid-column: span 3 / span 3; }
+  
+  /* --- Notificação (Substitui Alert) --- */
+  #notification-bar {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    background-color: var(--accent);
+    color: white;
+    font-weight: 500;
+    z-index: 9999;
+    transition: top 0.4s ease-in-out;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  }
+  #notification-bar.show { top: 20px; }
+  #notification-bar.success { background-color: var(--green); }
+  #notification-bar.error { background-color: var(--red); }
+  #notification-bar.warning { background-color: var(--orange); }
+
+  /* --- Cabeçalho --- */
+  header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+    padding: 1rem 1.5rem; background-color: var(--card); border-radius: 0.75rem;
+    margin: 1.5rem auto; max-width: 1400px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  }
+  .light header { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); }
+  
+  .logo { font-size: 1.25rem; font-weight: 700; color: var(--text); }
+  .logo span { color: var(--accent); }
+  .header-controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-left: auto; }
+  .control-group { display: flex; align-items: center; gap: 0.75rem; }
+  
+  /* Botões */
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--font-sans); font-size: 0.875rem; font-weight: 500;
+    padding: 0.5rem 1rem; border: none; border-radius: 0.5rem;
+    background-color: var(--glass); color: var(--muted);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn:hover { background-color: var(--accent); color: white; }
+  .btn-primary { background-color: var(--accent); color: white; }
+  .btn-primary:hover { background-color: #1d4ed8; }
+  .light .btn-primary:hover { background-color: #3b82f6; }
+  
+  .btn.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+  .btn.btn-icon { padding: 0.5rem; }
+  
+  .file-upload-wrapper {
+    position: relative; overflow: hidden; display: inline-block;
+    /* AJUSTE: Padding maior para destacar o botão de upload */
+    padding: 0.6rem 1.2rem;
+    background-color: var(--accent); color: white; border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .file-upload-wrapper.success {
+    background-color: var(--green);
+  }
+  .file-upload-wrapper input[type="file"] {
+    font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer;
+  }
+  
+  /* --- Cards de Sumário --- */
+  .card {
+    background: var(--card); border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);
+    transition: all 0.2s;
+  }
+  .light .card { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.03), 0 1px 2px 0 rgba(0,0,0,0.03); }
+  
+  .summary-card { padding: 1.5rem; }
+  .summary-card h2 {
+    font-size: 0.9rem; font-weight: 500; color: var(--muted);
+    margin: 0 0 0.5rem 0;
+  }
+  .summary-card .value {
+    /* AJUSTE: Fonte responsiva para evitar overflow */
+    font-size: clamp(1.5rem, 5vw, 2rem);
+    font-weight: 700; margin: 0;
+    white-space: nowrap; /* Evita quebra de linha */
+  }
+  .summary-card .value.positive { color: var(--green); }
+  .summary-card .value.negative { color: var(--red); }
+  .summary-card .value.neutral { color: var(--text); }
+  
+  /* --- Filtros --- */
+  .filter-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+    background-color: var(--card); padding: 1rem; border-radius: 0.75rem;
+  }
+  .search-box {
+    position: relative; flex-grow: 1;
+  }
+  .search-box .icon {
+    position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 0.6rem 0.75rem 0.6rem 2.25rem;
+    border: 1px solid var(--bg);
+    background-color: var(--bg);
+    border-radius: 0.5rem;
+    color: var(--text);
+    font-family: var(--font-sans); font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent); background-color: var(--panel);
+    outline: none; box-shadow: 0 0 0 2px var(--accent);
+  }
+  
+  .filter-group {
+    display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;
+  }
+  
+  /* Checkboxes customizados */
+  .checkbox-label {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.875rem; color: var(--muted); cursor: pointer;
+    user-select: none;
+  }
+  .checkbox-label input { display: none; }
+  .checkbox-label .checkbox-custom {
+    width: 1.15rem; height: 1.15rem; border: 2px solid var(--muted);
+    border-radius: 0.25rem; display: flex; align-items: center;
+    justify-content: center; transition: all 0.2s;
+  }
+  .checkbox-label .checkbox-custom .icon {
+    display: none; color: white; width: 0.8rem; height: 0.8rem;
+  }
+  .checkbox-label input:checked + .checkbox-custom {
+    background-color: var(--accent); border-color: var(--accent);
+  }
+  .checkbox-label input:checked + .checkbox-custom .icon { display: block; }
+  
+  /* Filtro de Ano */
+  .year-filter-grid {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+  }
+  .year-card {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem; font-weight: 500;
+    border-radius: 0.5rem;
+    background-color: var(--glass);
+    color: var(--muted);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .year-card:hover {
+    background-color: var(--accent); color: white;
+  }
+  .year-card.active {
+    background-color: var(--accent); color: white;
+    border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent);
+  }
+  
+  /* --- Gráficos --- */
+  .chart-container {
+    background-color: var(--card); padding: 1.5rem; border-radius: 0.75rem;
+    position: relative;
+    /* Dica: min-height ajuda a evitar "pulos" de layout antes do gráfico carregar */
+    min-height: 350px; 
+  }
+  .chart-container canvas { max-height: 350px; }
+  .chart-title {
+    font-size: 1.1rem; font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  
+  /* --- Heatmap (Adaptado do Dashboard.html) --- */
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(53, 1fr);
+    gap: 3px;
+    margin-top: 8px;
+  }
+  .heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: var(--glass);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative; /* Para o tooltip */
+  }
+  .heatmap-cell:hover {
+    transform: scale(1.2);
+    z-index: 10;
+    border: 1px solid var(--accent);
+  }
+  .heatmap-cell.level-0 { background: var(--glass); }
+  .heatmap-cell.level-1 { background: rgba(239, 68, 68, 0.3); } /* Vermelho 30% */
+  .heatmap-cell.level-2 { background: rgba(239, 68, 68, 0.5); } /* Vermelho 50% */
+  .heatmap-cell.level-3 { background: rgba(239, 68, 68, 0.7); } /* Vermelho 70% */
+  .heatmap-cell.level-4 { background: rgba(239, 68, 68, 0.9); } /* Vermelho 90% */
+  
+  .heatmap-legend {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .heatmap-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .heatmap-legend-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+  }
+
+  /* --- Acordeão de Transações --- */
+  .accordion-toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    background-color: var(--card);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .accordion-toolbar .search-box {
+    max-width: 400px; /* Limita a largura da busca local */
+  }
+  
+  .sort-controls { display: flex; gap: 0.5rem; }
+  .sort-btn {
+    display: flex; align-items: center; gap: 0.3rem;
+    font-size: 0.8rem; font-weight: 500;
+    color: var(--muted); background: var(--glass);
+    padding: 0.4rem 0.7rem; border: none; border-radius: 0.5rem; cursor: pointer;
+  }
+  .sort-btn:hover { background: var(--card); color: var(--text); }
+  .sort-btn.active { color: var(--accent); background: var(--card); }
+  
+  .accordion-wrapper {
+    background-color: var(--card);
+    border-radius: 0.75rem;
+    overflow: hidden; /* Garante que os filhos respeitem o border-radius */
+  }
+  
+  .accordion-group-header {
+    display: grid;
+    /* AJUSTE: Alinhamento de colunas com larguras fixas */
+    grid-template-columns: auto 1fr 100px 120px 120px;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background-color: var(--glass);
+    border-bottom: 1px solid var(--bg);
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .accordion-group-header:hover { background-color: rgba(255,255,255, 0.04); }
+  .light .accordion-group-header:hover { background-color: rgba(0,0,0, 0.03); }
+  
+  .accordion-group-header .group-name {
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .accordion-group-header .group-name.ignored-item {
+    color: var(--muted);
+    font-style: italic;
+  }
+  
+  .group-value { text-align: right; font-weight: 500; font-size: 0.9rem; }
+  .group-value.positive { color: var(--green); }
+  .group-value.negative { color: var(--red); }
+  .group-value.neutral { color: var(--text); }
+  .group-count { color: var(--muted); font-size: 0.85rem; text-align: right; }
+  
+  /* REMOVIDO: Os controles agora estão na barra de ações flutuante */
+  /* .group-controls { ... } */
+  
+  .accordion-group-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+  .transaction-table { width: 100%; border-collapse: collapse; }
+  .transaction-table th, .transaction-table td {
+    padding: 0.75rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--bg);
+    font-size: 0.875rem;
+  }
+  /* AJUSTE: Coluna de ações para o lápis */
+  .transaction-table th:last-child, .transaction-table td:last-child {
+    width: 1%; /* Coluna pequena para o botão */
+    padding-right: 1.5rem;
+    text-align: right;
+  }
+  .transaction-table .btn-icon {
+    background-color: transparent;
+    color: var(--muted);
+    padding: 0.3rem;
+  }
+  .transaction-table .btn-icon:hover {
+    background-color: var(--bg);
+    color: var(--text);
+  }
+
+  .transaction-table th {
+    font-weight: 600; color: var(--muted); font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .transaction-table tr:last-child td { border-bottom: none; }
+  .transaction-table td:nth-child(2) { color: var(--text); } /* Histórico */
+  .transaction-table td:nth-child(3) { text-align: right; } /* Crédito */
+  .transaction-table td:nth-child(4) { text-align: right; } /* Débito */
+  
+  #load-more-wrapper {
+    text-align: center;
+    padding: 1.5rem;
+  }
+  
+  /* --- Barra de Ações de Seleção (NOVO) --- */
+  #selection-action-bar {
+    position: fixed;
+    bottom: -100px; /* Começa fora da tela */
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 3rem);
+    max-width: 600px;
+    background-color: var(--panel);
+    border: 1px solid var(--glass);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    z-index: 100;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    transition: bottom 0.3s ease-in-out;
+  }
+  #selection-action-bar.visible {
+    bottom: 1.5rem;
+  }
+  #selection-action-bar .selection-count {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  #selection-action-bar .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+  #selection-action-bar .btn {
+    background-color: var(--glass);
+  }
+
+  /* --- Modais --- */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none; /* Controlado por JS */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .modal-overlay.active { display: block; opacity: 1; }
+  
+  .modal-content {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--card);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1rem;
+  }
+  .modal-title { font-size: 1.25rem; font-weight: 600; }
+  .modal-close {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; padding: 0.5rem;
+  }
+  .modal-close:hover { color: var(--text); }
+  
+  /* Modal de Mover */
+  #move-search-box { position: relative; }
+  #move-group-search { width: 100%; padding-right: 2.5rem; }
+  #move-search-clear {
+    position: absolute; right: 0; top: 0;
+    height: 100%; padding: 0 0.75rem;
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; display: none; /* JS controla */
+  }
+  #move-group-list {
+    max-height: 200px; overflow-y: auto;
+    border: 1px solid var(--bg); border-radius: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .group-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--bg);
+  }
+  .group-item:last-child { border-bottom: none; }
+  .group-item:hover { background-color: var(--bg); }
+  .group-item.selected {
+    background-color: var(--accent);
+    color: white;
+    font-weight: 500;
+  }
+  .modal-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 1.5rem;
+  }
+  
+  /* Modal Editor de Aliases */
+  #nameAliasesEditor {
+    width: 100%; height: 300px;
+    background-color: var(--bg);
+    border: 1px solid var(--panel);
+    border-radius: 0.5rem;
+    color: var(--text);
+    font-family: monospace;
+    font-size: 0.85rem;
+    padding: 0.75rem;
+    resize: vertical;
+  }
+  
+  /* Modal de Resumo (Novo) */
+  #summary-chart-container {
+    position: relative;
+    max-height: 300px;
+    margin: 1.5rem auto;
+  }
+  #summary-text {
+    font-size: 1rem;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.6;
+  }
+  #summary-text strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* --- Responsividade --- */
+  @media (max-width: 1200px) {
+    .span-8 { grid-column: span 12 / span 12; }
+    .span-4 { grid-column: span 12 / span 12; }
+  }
+  @media (max-width: 900px) {
+    .span-6 { grid-column: span 12 / span 12; }
+    .accordion-group-header {
+      /* AJUSTE: Layout responsivo para colunas alinhadas */
+      grid-template-columns: auto 1fr;
+      row-gap: 0.5rem;
+      column-gap: 1rem;
+      padding: 0.75rem 1rem;
+    }
+    .accordion-group-header .group-name { grid-column: 2 / 3; grid-row: 1 / 2; }
+    .accordion-group-header .checkbox-label { grid-column: 1 / 2; grid-row: 1 / 2; }
+    
+    /* Cria uma sub-grid para os valores */
+    .group-values-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      padding-top: 0.5rem;
+      margin-top: 0.5rem;
+      border-top: 1px solid var(--bg);
+    }
+    .group-values-grid > div { text-align: center; }
+    .group-count, .group-value { text-align: center; }
+
+    .transaction-table { display: block; overflow-x: auto; } /* Scroll horizontal em tabelas */
+  }
+  @media (max-width: 768px) {
+    main, header { margin: 1rem; padding: 0 1rem; }
+    header { padding: 1rem; }
+    .logo { font-size: 1.1rem; }
+    .header-controls { margin-left: 0; width: 100%; justify-content: center; }
+    .span-3 { grid-column: span 6 / span 6; }
+    .summary-card .value { font-size: 1.5rem; }
+    .summary-card h2 { font-size: 0.8rem; }
+    .accordion-toolbar { grid-template-columns: 1fr; }
+    .sort-controls { margin-left: 0; justify-content: center; }
+    .accordion-title { margin-left: auto; }
+  }
+  
+  /* Classes utilitárias */
+  .hidden { display: none !important; }
+
+</style>
+</head>
+
+<!-- Começa com 'dark' por padrão, o JS corrige para 'light' se estiver no localStorage -->
+<body class="dark">
+
+<!-- SVGs embutidos para ícones -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></symbol>
+  <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></symbol>
+  <symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></symbol>
+  <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></symbol>
+  <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></symbol>
+  <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></symbol>
+  <symbol id="icon-pie-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></symbol>
+  <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></symbol>
+  <symbol id="icon-move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 8 22 12 18 16"></polyline><polyline points="6 8 2 12 6 16"></polyline><line x1="2" y1="12" x2="22" y2="12"></line></symbol>
+  <symbol id="icon-ignore" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></symbol>
+  <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
+  <symbol id="icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></symbol>
+  <symbol id="icon-chevron-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></symbol>
+  <symbol id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></symbol>
+  <symbol id="icon-print" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></symbol>
+</svg>
+
+<!-- Barra de Notificação (Substitui Alert) -->
+<div id="notification-bar"></div>
+
+<!-- Cabeçalho -->
+<header>
+  <h1 class="logo">Finanças<span>Biru</span></h1>
+  <div class="header-controls">
+    <div class="control-group">
+      <label class="file-upload-wrapper">
+        <span class="file-upload-label">
+          <svg class="icon"><use href="#icon-upload"></use></svg>
+          Carregar CSV
+        </span>
+        <input type="file" id="fileInput" accept=".csv">
+      </label>
+    </div>
+
+    <div class="control-group">
+      <button class="btn btn-sm" id="importBackupBtn">
+        <svg class="icon"><use href="#icon-download"></use></svg>
+        Importar
+      </button>
+      <input type="file" id="backupInput" accept=".json" class="hidden">
+      <button class="btn btn-sm" id="exportBackupBtn">
+        <svg class="icon"><use href="#icon-upload"></use></svg>
+        Exportar
+      </button>
+    </div>
+
+    <div class="control-group">
+      <button class="btn btn-sm" id="summaryButton">
+        <svg class="icon"><use href="#icon-pie-chart"></use></svg>
+        Resumo
+      </button>
+      <button class="btn btn-sm" id="aliasEditorBtn">
+        <svg class="icon"><use href="#icon-edit"></use></svg>
+        Aliases
+      </button>
+      <button class="btn btn-sm" id="printScreenBtn">
+        <svg class="icon"><use href="#icon-image"></use></svg>
+        Print
+      </button>
+    </div>
+
+    <div class="control-group">
+      <button class="btn btn-icon" id="themeToggle" title="Mudar Tema">
+        <svg class="icon icon-lg"><use href="#icon-sun"></use></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Cards de Sumário -->
+  <div class="grid-layout summary-grid">
+    <div class="card summary-card">
+      <h2>Total Crédito</h2>
+      <p id="totalCredit" class="value positive">R$ 0,00</p>
+    </div>
+    <div class="card summary-card">
+      <h2>Total Débito</h2>
+      <p id="totalDebit" class="value negative">R$ 0,00</p>
+    </div>
+    <div class="card summary-card">
+      <h2>Saldo do Período</h2>
+      <p id="totalBalance" class="value neutral">R$ 0,00</p>
+    </div>
+    <div class="card summary-card">
+      <h2>Transações</h2>
+      <p id="totalTransactions" class="value neutral">0</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filter-bar span-12" style="margin-top: 1.5rem;">
+    <div class="search-box">
+      <svg class="icon"><use href="#icon-search"></use></svg>
+      <input type="text" id="mainSearch" placeholder="Buscar em grupos ou transações...">
+    </div>
+    <div class="filter-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="groupUnknown">
+        <span class="checkbox-custom"><svg class="icon"><use href="#icon-check"></use></svg></span>
+        Agrupar Desconhecidos
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="showIgnored" checked="">
+        <span class="checkbox-custom"><svg class="icon"><use href="#icon-check"></use></svg></span>
+        Exibir Ignorados
+      </label>
+      <button class="btn btn-sm" id="clearFiltersBtn">
+        <svg class="icon"><use href="#icon-refresh"></use></svg>
+        Limpar
+      </button>
+    </div>
+  </div>
+  
+  <!-- Filtro de Ano -->
+  <div class="year-filter-grid span-12" id="year-filter-container" style="margin-top: 1.5rem;">
+    <!-- Cards de ano serão injetados aqui -->
+  </div>
+
+  <!-- Gráficos -->
+  <div class="grid-layout" style="margin-top: 1.5rem;">
+    <div class="span-8">
+      <div class="chart-container">
+        <h3 class="chart-title">Evolução Diária (Saldo)</h3>
+        <canvas id="chartDaily"></canvas>
+      </div>
+    </div>
+    <div class="span-4">
+      <div class="chart-container">
+        <h3 class="chart-title">Evolução Mensal (C/D)</h3>
+        <canvas id="chartMonthly"></canvas>
+      </div>
+    </div>
+
+    <!-- Novo: Heatmap de Calendário -->
+    <div class="span-8">
+      <div class="chart-container">
+        <h3 class="chart-title">Calendário de Atividade Financeira (Débitos)</h3>
+        <div id="calendar-heatmap" class="heatmap-grid"></div>
+        <div class="heatmap-legend">
+          <span>Menos</span>
+          <div class="heatmap-legend-item"><div class="heatmap-legend-box level-0"></div></div>
+          <div class="heatmap-legend-item"><div class="heatmap-legend-box level-1"></div></div>
+          <div class="heatmap-legend-item"><div class="heatmap-legend-box level-2"></div></div>
+          <div class="heatmap-legend-item"><div class="heatmap-legend-box level-3"></div></div>
+          <div class="heatmap-legend-item"><div class="heatmap-legend-box level-4"></div></div>
+          <span>Mais</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="span-4">
+      <div class="chart-container">
+        <h3 class="chart-title">Top 10 Destinatários/Fontes</h3>
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Acordeão de Transações -->
+  <div class="accordion-toolbar span-12">
+    <div class="search-box">
+      <svg class="icon"><use href="#icon-search"></use></svg>
+      <input type="text" id="groupSearch" placeholder="Buscar nos grupos listados...">
+    </div>
+    <div class="sort-controls">
+      <button class="sort-btn" data-sort="count">
+        Cont. <span class="sort-indicator"></span>
+      </button>
+      <button class="sort-btn active" data-sort="name">
+        Nome <span class="sort-indicator"></span>
+      </button>
+      <button class="sort-btn" data-sort="debit">
+        Débito <span class="sort-indicator"></span>
+      </button>
+      <button class="sort-btn" data-sort="credit">
+        Crédito <span class="sort-indicator"></span>
+      </button>
+    </div>
+  </div>
+  
+  <div class="accordion-wrapper span-12" id="accordion-container">
+    <!-- Grupos serão injetados aqui -->
+  </div>
+  
+  <div id="load-more-wrapper" class="span-12 hidden">
+    <button class="btn" id="loadMoreBtn">Carregar Mais 20</button>
+  </div>
+
+</main>
+
+<!-- Barra de Ações Flutuante (NOVO) -->
+<div id="selection-action-bar">
+  <span class="selection-count">0 itens selecionados</span>
+  <div class="action-buttons">
+    <button class="btn btn-sm" id="move-selected-btn" title="Mover Grupos Selecionados">
+      <svg class="icon"><use href="#icon-move"></use></svg> Mover
+    </button>
+    <button class="btn btn-sm" id="ignore-selected-btn" title="Ignorar Grupos Selecionados">
+      <svg class="icon"><use href="#icon-ignore"></use></svg> Ignorar
+    </button>
+    <button class="btn btn-sm" id="print-selected-btn" title="Imprimir Grupos Selecionados">
+      <svg class="icon"><use href="#icon-print"></use></svg> Imprimir
+    </button>
+  </div>
+</div>
+
+
+<!-- Modal: Mover Transação (Single e Massa) -->
+<div id="moveTransactionModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title" id="move-modal-title">Mover Transação</h3>
+      <button class="modal-close" id="move-modal-close-btn">
+        <svg class="icon icon-lg"><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p id="move-modal-description" style="color: var(--muted); font-size: 0.9rem; margin-top: 0;">Mova transações para um grupo.</p>
+      <div id="move-search-box">
+        <input type="text" id="move-group-search" placeholder="Buscar ou criar novo grupo...">
+        <button id="move-search-clear"><svg class="icon"><use href="#icon-close"></use></svg></button>
+      </div>
+      <div id="move-group-list"></div>
+    </div>
+    <div class="modal-footer">
+      <label class="checkbox-label">
+        <input type="checkbox" id="saveAliasCheckbox" checked="">
+        <span class="checkbox-custom"><svg class="icon"><use href="#icon-check"></use></svg></span>
+        Salvar como alias
+      </label>
+      <button class="btn btn-primary" id="confirmMoveBtn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editor de Aliases -->
+<div id="aliasEditorModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Editor de Aliases (JSON)</h3>
+      <button class="modal-close" id="alias-editor-close-btn"><svg class="icon icon-lg"><use href="#icon-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0;">Edite as regras de alias. O formato é <code>"nome_sujo": "Nome Limpo"</code>.</p>
+      <textarea id="nameAliasesEditor"></textarea>
+    </div>
+    <div class="modal-footer" style="justify-content: flex-end;">
+      <button class="btn btn-primary" id="saveAliasesBtn"><svg class="icon"><use href="#icon-save"></use></svg> Salvar e Reprocessar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Resumo (Novo) -->
+<div id="summaryModal" class="modal-overlay">
+  <div class="modal-content" style="max-width: 400px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Resumo do Período</h3>
+      <button class="modal-close" id="summary-modal-close-btn"><svg class="icon icon-lg"><use href="#icon-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+       <div id="summary-chart-container"><canvas id="summaryChart"></canvas></div>
+       <p id="summary-text">Carregando resumo...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Transação (NOVO) -->
+<div id="editTransactionModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title" id="edit-modal-title">Editar Transação</h3>
+      <button class="modal-close" id="edit-modal-close-btn"><svg class="icon icon-lg"><use href="#icon-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0;">Altere o histórico da transação. Isso não criará um alias.</p>
+      <input type="text" id="edit-hist-input" placeholder="Novo histórico da transação...">
+    </div>
+    <div class="modal-footer" style="justify-content: flex-end;">
+      <button class="btn btn-primary" id="confirmEditBtn">Salvar Alteração</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- O SCRIPT SERÁ CARREGADO AQUI -->
+<script>
+/* ======================================================================== */
+/* */
+/* FINANÇAS DO BIRU - CONSOLIDADO (JS EMBUTIDO)         */
+/* */
+/* BUILD COMPLETO (Parte 1 + Parte 2)                   */
+/* (Corrigido: Parser, Datas, Valores e 'DOMContentLoaded') */
+/* */
+/* ======================================================================== */
+
+/* ======================================================================== */
+/* PARTE 1: DADOS E LÓGICA                                                  */
+/* ======================================================================== */
+
+/* --- Variáveis Globais de Estado --- */
+let RAW_DATA = []; // Dados brutos do CSV
+let PROCESSED_DATA = []; // Dados processados e agrupados
+let FILTERED_DATA = []; // Dados visíveis após filtros
+let NAME_ALIASES = {}; // Objeto de aliases
+let ALL_YEARS = []; // Array de anos para os filtros
+let CURRENT_YEARS = []; // Anos selecionados
+let CURRENT_SORT = { key: 'name', order: 'asc' }; // Ordenação
+let ACCORDION_PAGE = 1; // Paginação do acordeão
+const ACCORDION_PAGE_SIZE = 20;
+
+// Estado dos filtros (carregado do localStorage)
+let FILTERS = {
+  search: '',
+  groupUnknown: false,
+  showIgnored: true,
+  groupSearch: '', // NOVO: Filtro de busca local do acordeão
+};
+
+// Instâncias dos Gráficos (serão inicializadas)
+let chartDaily = null;
+let chartMonthly = null;
+let barChart = null;
+let summaryChart = null;
+let calendarHeatmap = null;
+
+// Nomes-chave para ignorar nos totais (se 'showIgnored' for falso)
+// Fundido do Dashboard.html e EduBiru.HTML
+const IGNORE_NAMES_REGEX = /^(Crédito Salário|Pix Recebido|Aplicação|Resgate|Transferência Interna|Pagamento Fatura|Carlos Eduardo Calçada|Maria Inez dos Santos Calçada|O Próprio Favorecido)/i;
+
+/* ======================================================================== */
+/* FUNÇÕES DE PARSE (CORRIGIDAS E NO LUGAR CERTO)     */
+/* ======================================================================== */
+
+/**
+ * Converte data DD/MM/YYYY ou DD/MM/YY para um objeto Date.
+ * (Versão "Parruda" que aceita 2 ou 4 dígitos no ano)
+ * @param {string} dateStr - A string da data (ex: "17/02/23" ou "17/02/2023")
+ * @returns {Date|null} - O objeto Date ou null se inválido.
+ */
+function parseDate(dateStr) {
+  if (!dateStr) return null;
+  
+  // 1. Limpa lixo (aspas, espaços)
+  const cleanStr = dateStr.replace(/"/g, '').trim();
+  
+  // 2. Valida o tamanho (8 ou 10 chars)
+  if (cleanStr.length !== 8 && cleanStr.length !== 10) return null;
+
+  const parts = cleanStr.split('/');
+  if (parts.length !== 3) return null;
+
+  // 3. Converte para número (trata "08" como 8)
+  let day = Number(parts[0]);
+  let month = Number(parts[1]);
+  let year = Number(parts[2]);
+  
+  // 4. A MÁGICA: Converte ano de 2 dígitos (ex: 23) para 4 (ex: 2023)
+  if (year < 100) {
+    year += 2000;
+  }
+
+  // 5. Mês é 0-indexado
+  const date = new Date(year, month - 1, day);
+  
+  // 6. Validação final (vê se não é 31/02, etc.)
+  if (date.getFullYear() == year && date.getMonth() == (month - 1) && date.getDate() == day) {
+    return date;
+  }
+  return null;
+}
+
+/**
+ * Converte valor BRL (ex: "1.234,56" ou ""-20,00"") para número.
+ * (Versão "Parruda" que aceita aspas e vírgulas)
+ * @param {string} valueStr - A string do valor.
+ * @returns {number} - O valor numérico.
+ */
+function parseValue(valueStr) {
+  if (!valueStr) return 0;
+  
+  // 1. Remove R$, aspas, e espaços
+  let cleaned = valueStr.toString()
+    .replace(/"/g, '') // TIRA AS ASPAS
+    .replace("R$", "")
+    .trim();
+  
+  // 2. Trata parênteses (ex: (1.234,56))
+  if (cleaned.startsWith('(') && cleaned.endsWith(')')) {
+    cleaned = '-' + cleaned.substring(1, cleaned.length - 1);
+  }
+
+  // 3. Converte BRL (1.234,56) para US (1234.56)
+  // Remove o ponto de milhar (SE ele existir antes de uma vírgula)
+  if (cleaned.includes(',') && cleaned.includes('.')) {
+     cleaned = cleaned.replace(/\./g, ''); // Remove todos os pontos (milhar)
+  }
+  // Troca a vírgula (decimal) por ponto
+  cleaned = cleaned.replace(',', '.'); 
+  
+  return parseFloat(cleaned) || 0;
+}
+
+
+/* ======================================================================== */
+/* LISTA MESTRA DE ALIASES (PRÉ-CARREGADA)            */
+/* ======================================================================== */
+
+// Esta é a fusão do seu 'financas_biru_backup_2025-11-05.json'
+// com todas as regras encontradas nos outros arquivos HTML.
+const DEFAULT_ALIASES = {
+  "maria inez": "Maria Inez dos Santos Calçada",
+  "maria inez dos santos": "Maria Inez dos Santos Calçada",
+  "maria inez dos santos calcada": "Maria Inez dos Santos Calçada",
+  "inez dos santos": "Maria Inez dos Santos Calçada",
+  "inez dos santos calca": "Maria Inez dos Santos Calçada",
+  "carlos eduardo": "Carlos Eduardo Calçada",
+  "carlos eduardo calcada": "Carlos Eduardo Calçada",
+  "carlos eduardo calcad": "Carlos Eduardo Calçada",
+  "ana paula calcada": "Ana Paula Calçada Pereira",
+  "ana paula calcada pereira": "Ana Paula Calçada Pereira",
+  "ana paula calcada pereir": "Ana Paula Calçada Pereira",
+  "angelo calcada": "Angelo Calçada Pereira",
+  "angelo calcada pereira": "Angelo Calçada Pereira",
+  "fabio ricardo trindad": "Fábio Ricardo Trindade",
+  "lucas jesus da silva arruiz": "Lucas Jesus da Silva",
+  "lucas jesus da silva": "Lucas Jesus da Silva",
+  "lucas jesus d": "Lucas Jesus da Silva",
+  "lucas jesus da silva e afins": "Lucas Jesus da Silva",
+  "alexsander tarouco l": "Alexsander Tarouco",
+  "luiza silveira perei": "Luiza Silveira Pereira",
+  "cristina dos santos b": "Cristina dos Santos",
+  "ewerton": "Ewerton Adilson Valente Machado",
+  "ewerton adilson valente machado": "Ewerton Adilson Valente Machado",
+  "hs do brasil ltda": "Apostas e Jogos",
+  "kaizen gaming brasil": "Apostas e Jogos",
+  "betmgm": "Apostas e Jogos",
+  "betnacional": "Apostas e Jogos",
+  "saque e pague r": "Movimentações em Dinheiro",
+  "caixa economica fede": "Caixa Econômica Federal",
+  "itaucard": "Cartões e Bancos",
+  "tricard": "Cartões e Bancos",
+  "oper serv hoteleiros ltda": "Salários",
+  "vivo rs": "Operadoras",
+  "tim": "Operadoras",
+  "vivo": "Operadoras",
+  "claro": "Operadoras",
+  "oi": "Operadoras",
+  "vetorialnet informatica e servic": "Operadoras",
+  "vetorialnet": "Operadoras",
+  "netflix com": "Operadoras",
+  "ceee d rs": "Consumo e Serviços",
+  "ceee": "Consumo e Serviços",
+  "corsan": "Consumo e Serviços",
+  "cpfl sp": "Consumo e Serviços",
+  "cpfl": "Consumo e Serviços",
+  "agua": "Consumo e Serviços",
+  "luz": "Consumo e Serviços",
+  "internet": "Consumo e Serviços",
+  "sanasa": "Consumo e Serviços",
+  "tv mae": "Consumo e Serviços",
+  "detran gade e rs": "Impostos e tributos",
+  "detran": "Impostos e tributos",
+  "tarifas": "Impostos e tributos",
+  "tributos": "Impostos e tributos",
+  "mercadopago": "Mercado Pago",
+  "o proprio favorecido": "O próprio favorecido",
+  "supermercado guanabara": "Supermercado Guanabara",
+  "dimed": "Farmácias Panvel",
+  "panvel": "Farmácias Panvel",
+  "drogasil": "Drogasil",
+  "raia": "Drogasil",
+  "iugu": "Iugu",
+  "paypal do brasil": "Paypal do Brasil",
+  "paypal do brasi": "Paypal do Brasil",
+  "din atm": "Movimentações em Dinheiro",
+  "din bco": "Movimentações em Dinheiro",
+  "juliana reis rodrigues": "Juliana Reis Rodrigues",
+  "juliana reis rodrigu": "Juliana Reis Rodrigues",
+  "juliana reis rodrigues me": "Juliana Reis Rodrigues",
+  "juliana reis rodr": "Juliana Reis Rodrigues",
+  "juliana reis rodrigues": "Juliana Reis Rodrigues",
+  "uber": "Uber",
+  "uber do brasil tecnol": "Uber",
+  "uber uber trip": "Uber",
+  "uber trip helpuber": "Uber",
+  "uberbr uber trip hel": "Uber",
+  "uber do brasil tecno": "Uber",
+  "uber do brasil tecnologia": "Uber",
+  "deisi maria troina al": "Deisi Maria",
+  "t elet disp carlos e c costa": "Carlos Eduardo Calçada",
+  "t elet disp carlos costa": "Carlos Eduardo Calçada",
+  "pag carloseduardo": "Carlos Eduardo Calçada",
+  "qrcode est luiz carlos rodrigues": "Luiz Carlos Rodrigues",
+  "contas dotel": "Cred Salário Hotel Swan",
+  "vivian de fatima sala": "Vivian de Fátima Salazar",
+  "vivian de fatima salazar s": "Vivian de Fátima Salazar",
+  "vivian de fatima salazar d": "Vivian de Fátima Salazar",
+  "cred salario dimed sa distribuidora de medic": "Cred Salário Farmácias Panvel",
+  "pcc bco age cta": "Cred Salário Farmácias Panvel",
+  "corban din o proprio favorecido": "Carlos Eduardo Calçada",
+  "net": "Operadoras",
+  "vetorial": "Operadoras",
+  "recarga": "Operadoras",
+  "nsx": "Apostas e Jogos",
+  "nsx brasil": "Apostas e Jogos",
+  "bet": "Apostas e Jogos"
+};
+
+
+/* ======================================================================== */
+/* PARSER DE CSV (INTACTO - EduBiru.HTML + Correção)    */
+/* ======================================================================== */
+
+/**
+ * Faz o parsing do texto do CSV.
+ * Esta é a função MANTIDA do EduBiru.HTML, otimizada para Bradesco/Itaú.
+ * (Agora corrigida para pular o lixo do cabeçalho)
+ * @param {string} text - O conteúdo bruto do CSV.
+ */
+function parseCSVText(text) {
+  const lines = text.split('\n');
+  let data = [];
+  let headers = [];
+  let headerFound = false;
+  let continuation = null; // Armazena a linha parcial
+  
+  // *** A CORREÇÃO ESTÁ AQUI ***
+  // Em vez de assumir a primeira linha, procuramos pela linha de cabeçalho.
+  
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+
+    // Se estamos em uma linha de continuação
+    if (continuation) {
+      const isContinuationLine = line.startsWith(' ') || !/^\d{2}\/\d{2}/.test(line.replace(/"/g, ''));
+      
+      if (isContinuationLine) {
+        const cleanContinuation = line.replace(/;"/g, '').replace(/"/g, '').replace(/;+$/, '').trim();
+        continuation.hist += ' ' + cleanContinuation;
+        
+        // Se a linha de continuação tiver o valor, anexa e finaliza
+        const separator = line.includes(';') ? ';' : ',';
+        const values = line.split(separator);
+        const creditIdx = headers.findIndex(h => h.toLowerCase().includes('crédito'));
+        const debitIdx = headers.findIndex(h => h.toLowerCase().includes('débito'));
+        const creditStr = (creditIdx !== -1 ? values[creditIdx] : '0') || '0';
+        const debitStr = (debitIdx !== -1 ? values[debitIdx] : '0') || '0';
+        const credit = parseValue(creditStr);
+        const debit = parseValue(debitStr);
+        const value = credit > 0 ? credit : -Math.abs(debit);
+
+        if (value !== 0) {
+            continuation.value = value;
+            data.push(continuation);
+            continuation = null;
+        }
+        continue;
+      } else {
+        // Não era continuação, salva a linha anterior e processa a atual
+        if (continuation.value !== 0) data.push(continuation);
+        continuation = null;
+      }
+    }
+
+    // Detecção de Cabeçalho (robusta)
+    if (!headerFound) {
+      const lowerLine = line.toLowerCase();
+      // Procura pelas palavras-chave que DEFINEM o cabeçalho
+      if (lowerLine.includes('data') && lowerLine.includes('histórico') && (lowerLine.includes('crédito') || lowerLine.includes('valor'))) {
+        
+        // Detecta o separador (geralmente ; mas pode ser ,)
+        const separator = line.includes(';') ? ';' : ',';
+        headers = line.split(separator).map(h => h.trim().replace(/"/g, ''));
+        
+        // Remove colunas vazias no final (ex: o 'Saldo (R$);' do CSV original)
+        while (headers.length > 0 && headers[headers.length - 1] === '') {
+          headers.pop();
+        }
+        
+        headerFound = true;
+        continue; // Pula a linha do cabeçalho
+      }
+      
+      // Se não achou o cabeçalho, continua pulando (Ex: "Extrato de: Ag: 310...")
+      continue; 
+    }
+    
+    // *** FIM DA CORREÇÃO DE CABEÇALHO ***
+
+    // Processamento das Linhas de Dados
+    // Detecta o separador (robusto para ponto-e-vírgula ou vírgula)
+    const separator = line.includes(';') ? ';' : ',';
+    // Divide a linha. O CSV do Bradesco pode ter colunas vazias no final (;;;)
+    // Usamos o 'headers.length' como guia
+    const values = line.split(separator).map(v => v.trim());
+
+    let transaction = {};
+
+    // --- Tratamento Bradesco (Crédito/Débito separados) ---
+    // (Usa 'includes' para ser flexível com "Crédito (R$)" ou só "Crédito")
+    const dateIdx = headers.findIndex(h => h.toLowerCase().includes('data'));
+    const histIdx = headers.findIndex(h => h.toLowerCase().includes('histórico'));
+    const creditIdx = headers.findIndex(h => h.toLowerCase().includes('crédito'));
+    const debitIdx = headers.findIndex(h => h.toLowerCase().includes('débito'));
+
+    if (creditIdx !== -1 || debitIdx !== -1) {
+      const dateStr = values[dateIdx];
+      let hist = values[histIdx] || '';
+      // Usa || '0' para garantir que não dê NaN
+      const creditStr = (creditIdx !== -1 ? values[creditIdx] : '0') || '0';
+      const debitStr = (debitIdx !== -1 ? values[debitIdx] : '0') || '0';
+
+      const date = parseDate(dateStr); // USA A FUNÇÃO NOVA
+      if (!date) continue; // Pula linha se a data for inválida (ex: "SALDO ANTERIOR")
+
+      const credit = parseValue(creditStr); // USA A FUNÇÃO NOVA
+      const debit = parseValue(debitStr);   // USA A FUNÇÃO NOVA
+      const value = credit > 0 ? credit : -Math.abs(debit);
+
+      transaction = { date, hist, value };
+    }
+    // --- Tratamento Itaú/Genérico (Valor único) ---
+    else {
+      const valueIdx = headers.findIndex(h => h.toLowerCase().includes('valor'));
+      if (valueIdx === -1) continue; // Formato desconhecido
+        
+      const dateStr = values[dateIdx];
+      let hist = values[histIdx] || '';
+      const valueStr = values[valueIdx] || '0';
+
+      const date = parseDate(dateStr); // USA A FUNÇÃO NOVA
+      if (!date) continue;
+
+      const value = parseValue(valueStr); // USA A FUNÇÃO NOVA
+      transaction = { date, hist, value };
+    }
+
+    // Verifica se a linha é uma continuação (Bradesco)
+    // Se o histórico não terminar com "..." e não tiver valor, é uma linha que será continuada
+    if (transaction.hist && !transaction.hist.endsWith('...') && transaction.value === 0 && !continuation) {
+      continuation = transaction;
+    } else {
+      // Linha normal ou fim de uma continuação
+      if (continuation) {
+        // Anexa o histórico da linha atual (que tem o valor)
+        continuation.hist += ' ' + transaction.hist.trim();
+        continuation.value = transaction.value;
+        data.push(continuation);
+        continuation = null;
+      } else {
+        // Só adiciona se tiver valor (ignora "SALDO ANTERIOR" com valor 0)
+        if (transaction.value !== 0) {
+          data.push(transaction);
+        }
+      }
+    }
+  } // Fim do loop
+
+  // Se sobrou uma continuação no final
+  if (continuation && continuation.value !== 0) {
+    data.push(continuation);
+  }
+
+  if (data.length === 0) {
+    throw new Error("Nenhuma transação válida encontrada. O parser pode não ter achado o cabeçalho (Data, Histórico, Valor/Crédito) ou as datas/valores.");
+  }
+
+  // Adiciona um ID único a cada transação
+  RAW_DATA = data.map((t, index) => ({ ...t, id: `tx-${Date.now()}-${index}` }));
+}
+
+
+/* ======================================================================== */
+/* LÓGICA DE PROCESSAMENTO E GRUPO                    */
+/* ======================================================================== */
+
+/**
+ * Limpa o nome bruto da transação, removendo lixo.
+ * @param {string} name - O nome bruto (ex: "PIX Enviado - João da Silva")
+ * @returns {string} - O nome limpo (ex: "João da Silva")
+ */
+function cleanRawName(name) {
+  if (!name) return "Desconhecido";
+  
+  // Remove prefixos comuns e lixo
+  let cleaned = name
+    // Prefixos de PIX/TED/DOC/Pagamento
+    .replace(/^(Pix Recebido|Pix Enviado|Pix Trans|PIX TRANS|PIX ENVIADO|PIX RECEBIDO|TED Recebida|TED Enviada|DOC\s?E\s?TED|Pagamento Conta|Pagamento Fatura|Pagamento de Conta|Pagto Fatura|Pagto Conta|Compra Cartão|Compra C Debito|COMPRA C\/DEBITO|Transferência Enviada|Transf Enviada)\s*[-–\s]*/i, '')
+    // Históricos de continuação do Bradesco (ex: "Rem: Carlos Eduardo Calcad 24/04")
+    .replace(/^(Rem:|Des:)\s*/i, '')
+    .replace(/pagamento\s*t[íi]tulo\s*/i, '')
+    .replace(/TBI\s\d+\.\d+\.\d+\.\d+/, '') // Remove IPs de TBI
+    .replace(/\d{2}\/\d{2}$/, '') // Remove data no final (ex: "24/04")
+    .replace(/\s{2,}/g, ' ') // Remove espaços extras
+    .trim();
+
+  // Se depois da limpeza não sobrar nada, retorna "Desconhecido"
+  return cleaned || "Desconhecido";
+}
+
+/**
+ * Gera uma chave canônica (minúscula, sem acentos) para usar nos aliases.
+ * @param {string} s - A string de entrada.
+ * @returns {string} - A chave limpa.
+ */
+function canonicalKey(s) {
+  if (!s) return "";
+  return s.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+    .replace(/[^a-z0-9\s]/g, '') // Remove caracteres não-alfanuméricos
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Encontra o nome "limpo" (alias) para uma transação.
+ * @param {string} rawName - O histórico bruto.
+ * @returns {string} - O nome limpo (alias) ou o nome tratado.
+ */
+function getCleanName(rawName) {
+  const cleaned = cleanRawName(rawName);
+  const key = canonicalKey(cleaned);
+  
+  // 1. Tenta achar um alias exato
+  if (NAME_ALIASES[key]) {
+    return NAME_ALIASES[key];
+  }
+  
+  // 2. Tenta achar um alias parcial (mais lento, mas mais flexível)
+  // Itera pelas chaves de alias e vê se alguma delas está contida no 'key'
+  for (const aliasKey in NAME_ALIASES) {
+    if (key.includes(aliasKey)) {
+      return NAME_ALIASES[aliasKey];
+    }
+  }
+
+  // 3. Se 'groupUnknown' estiver ativo e não achou alias, agrupa
+  if (FILTERS.groupUnknown) {
+    return "Transações Não Agrupadas";
+  }
+  
+  // 4. Se não, retorna o nome capitalizado
+  return capitalizeWords(cleaned);
+}
+
+/**
+ * Capitaliza palavras (ex: "JOÃO DA SILVA" -> "João da Silva").
+ * @param {string} s - A string de entrada.
+ * @returns {string} - A string capitalizada.
+ */
+function capitalizeWords(s) {
+  if (!s) return "";
+  const exceptions = new Set(['de', 'do', 'da', 'e', 'em', 'para', 'com', 'a', 'o', 'as', 'os']);
+  return s.toLowerCase().split(' ').map((word, index) => {
+    if (!word) return '';
+    if (index > 0 && exceptions.has(word)) return word;
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+}
+
+/**
+ * Processa os dados brutos (RAW_DATA) e os agrupa.
+ */
+function processData() {
+   if (RAW_DATA.length === 0) {
+    PROCESSED_DATA = [];
+    ALL_YEARS = [];
+    return;
+  }
+
+  const groups = new Map();
+  const years = new Set();
+
+  for (const t of RAW_DATA) {
+    if (!t.date) continue;
+    
+    years.add(t.date.getFullYear());
+    
+    // Aplica filtro de ano AQUI
+    if (CURRENT_YEARS.length > 0 && !CURRENT_YEARS.includes(t.date.getFullYear())) {
+      continue;
+    }
+
+    const cleanName = getCleanName(t.hist);
+    
+    if (!groups.has(cleanName)) {
+      groups.set(cleanName, {
+        name: cleanName,
+        transactions: [],
+        credit: 0,
+        debit: 0,
+        balance: 0,
+        count: 0,
+        isIgnored: IGNORE_NAMES_REGEX.test(cleanName) // Marca se é ignorado
+      });
+    }
+
+    const group = groups.get(cleanName);
+    group.transactions.push(t);
+    group.count++;
+    
+    if (t.value > 0) {
+      group.credit += t.value;
+    } else {
+      group.debit += t.value;
+    }
+    group.balance += t.value;
+  }
+  
+  // Salva todos os anos (para os botões de filtro)
+  // Só atualiza se for a primeira carga ou se os anos mudarem
+  const newYears = Array.from(years).sort((a, b) => b - a);
+  if (newYears.join(',') !== ALL_YEARS.join(',')) {
+    ALL_YEARS = newYears;
+  }
+
+  // Converte o Map para Array
+  PROCESSED_DATA = Array.from(groups.values());
+  applyFiltersAndSort();
+}
+
+/**
+ * Aplica os filtros de UI (busca, checkboxes) aos dados processados.
+ */
+function applyFiltersAndSort() {
+  const search = canonicalKey(FILTERS.search);
+
+  let data = PROCESSED_DATA;
+  
+  // 1. Filtro 'Exibir Ignorados'
+  if (!FILTERS.showIgnored) {
+    data = data.filter(g => !g.isIgnored);
+  }
+
+  // 2. Filtro de Busca (procura no nome do grupo ou nas transações)
+  if (search) {
+    data = data.filter(group => {
+      // 1. Verifica o nome do grupo
+      if (canonicalKey(group.name).includes(search)) {
+        return true;
+      }
+      // 2. Verifica o histórico das transações filhas
+      for (const t of group.transactions) {
+        if (canonicalKey(t.hist).includes(search)) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+  
+  // 3. Ordenação
+  data.sort((a, b) => {
+    let valA, valB;
+    const { key, order } = CURRENT_SORT;
+    
+    switch(key) {
+      case 'name':
+        valA = a.name.toLowerCase();
+        valB = b.name.toLowerCase();
+        break;
+      case 'count':
+        valA = a.count;
+        valB = b.count;
+        break;
+      case 'credit':
+        valA = a.credit;
+        valB = b.credit;
+        break;
+      case 'debit':
+        valA = Math.abs(a.debit); // Compara valores absolutos
+        valB = Math.abs(b.debit);
+        break;
+      default:
+        return 0;
+    }
+
+    if (valA > valB) return order === 'asc' ? 1 : -1;
+    if (valA < valB) return order === 'asc' ? -1 : 1;
+    return 0;
+  });
+  
+  // Se a ordenação for por valor (crédito/débito/contagem), o padrão é 'desc'
+  if (CURRENT_SORT.key !== 'name' && CURRENT_SORT.order === 'asc') {
+    data.reverse();
+  }
+
+  FILTERED_DATA = data;
+  
+  // Reseta a paginação do acordeão
+  ACCORDION_PAGE = 1;
+}
+
+/* ======================================================================== */
+/* FUNÇÕES DE FORMATAÇÃO E UTILIDADE                  */
+/* ======================================================================== */
+
+/**
+ * Formata um número para BRL (R$ 1.234,56).
+ * @param {number} value - O valor numérico.
+ * @returns {string} - A string formatada.
+ */
+function formatCurrency(value) {
+  if (isNaN(value)) value = 0;
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
+
+/**
+ * Formata uma data (ex: 10/11/2025).
+ * @param {Date} date - O objeto Date.
+ * @returns {string} - A string formatada.
+ */
+function formatDate(date) {
+  if (!date) return 'N/A';
+  return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
+
+/**
+ * Gera um debounce para inputs (atrasa a execução).
+ * @param {Function} func - A função a ser executada.
+ * @param {number} delay - O tempo em ms.
+ * @returns {Function} - A função "debounced".
+ */
+function debounce(func, delay = 300) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
+
+/* ======================================================================== */
+/* PARTE 2: RENDERIZAÇÃO E EVENTOS                                          */
+/* ======================================================================== */
+
+/* ======================================================================== */
+/* LÓGICA DE RENDERIZAÇÃO (UI)                      */
+/* ======================================================================== */
+
+/**
+ * Atualiza todos os componentes da UI (cards, gráficos, acordeão).
+ */
+function updateAll() {
+  // 1. Processa os dados (agrupa, filtra por ano)
+  processData();
+  
+  // 2. Renderiza os componentes principais
+  renderSummaryCards();
+  renderYearFilters(); // Renderiza botões de ano
+  renderAccordion();
+  
+  // 3. Renderiza os gráficos
+  renderDailyChart();
+  renderMonthlyChart();
+  renderBarChart();
+  renderActivityCalendar(); // Novo heatmap
+}
+
+/**
+ * Atualiza os cards de sumário (Total Crédito, Débito, Saldo).
+ */
+function renderSummaryCards() {
+  // Usa PROCESSED_DATA para os totais, mas filtra os ignorados se 'showIgnored' for falso
+  const dataToSum = FILTERS.showIgnored ? PROCESSED_DATA : PROCESSED_DATA.filter(g => !g.isIgnored);
+
+  let totalCredit = 0;
+  let totalDebit = 0;
+  let totalTransactions = 0;
+
+  for (const group of dataToSum) {
+    totalCredit += group.credit;
+    totalDebit += group.debit;
+    totalTransactions += group.count;
+  }
+  const totalBalance = totalCredit + totalDebit;
+
+  document.getElementById('totalCredit').textContent = formatCurrency(totalCredit);
+  document.getElementById('totalDebit').textContent = formatCurrency(totalDebit);
+  document.getElementById('totalBalance').textContent = formatCurrency(totalBalance);
+  document.getElementById('totalTransactions').textContent = totalTransactions;
+
+  // Atualiza classes de cor do Saldo
+  const balanceEl = document.getElementById('totalBalance');
+  balanceEl.classList.remove('positive', 'negative', 'neutral');
+  if (totalBalance > 0) balanceEl.classList.add('positive');
+  else if (totalBalance < 0) balanceEl.classList.add('negative');
+  else balanceEl.classList.add('neutral');
+}
+
+/**
+ * Renderiza os botões de filtro de ano.
+ */
+function renderYearFilters() {
+  const container = document.getElementById('year-filter-container');
+  if (!container) return;
+  
+  container.innerHTML = ''; // Limpa antes de renderizar
+  
+  // Botão "Todos os Anos"
+  const allCard = document.createElement('div');
+  allCard.className = 'year-card';
+  allCard.textContent = 'Todos';
+  if (CURRENT_YEARS.length === 0) {
+    allCard.classList.add('active');
+  }
+  allCard.addEventListener('click', () => {
+    CURRENT_YEARS = [];
+    saveFilters(); // Salva estado dos filtros
+    updateAll();
+  });
+  container.appendChild(allCard);
+
+  // Botões para cada ano
+  ALL_YEARS.forEach(year => {
+    const card = document.createElement('div');
+    card.className = 'year-card';
+    card.textContent = year;
+    if (CURRENT_YEARS.includes(year)) {
+      card.classList.add('active');
+    }
+    card.addEventListener('click', () => {
+      // Lógica de seleção múltipla (ou única, se preferir)
+      // Aqui, implementamos seleção única para simplificar
+      if (CURRENT_YEARS.includes(year)) {
+        CURRENT_YEARS = []; // Desseleciona se clicar no ativo
+      } else {
+        CURRENT_YEARS = [year]; // Seleciona o ano
+      }
+      saveFilters();
+      updateAll();
+    });
+    container.appendChild(card);
+  });
+}
+
+/**
+ * Renderiza o acordeão de transações (paginado).
+ */
+function renderAccordion() {
+  const container = document.getElementById('accordion-container');
+  const loadMoreWrapper = document.getElementById('load-more-wrapper');
+  if (!container) return;
+
+  // Se for página 1, limpa o container
+  if (ACCORDION_PAGE === 1) {
+    container.innerHTML = '';
+  }
+  
+  // NOVO: Aplica o filtro de busca local do acordeão
+  const groupSearch = canonicalKey(FILTERS.groupSearch);
+  let dataToRender = FILTERED_DATA;
+  if (groupSearch) {
+    dataToRender = FILTERED_DATA.filter(group => {
+      const isMatch = canonicalKey(group.name).includes(groupSearch);
+      // Se encontrar, garante que o grupo esteja visível (remove 'hidden')
+      const groupEl = document.querySelector(`[data-group-el-name="${group.name}"]`);
+      if (groupEl) {
+        groupEl.classList.toggle('search-match', isMatch);
+        groupEl.classList.toggle('hidden', !isMatch);
+      }
+      return isMatch;
+    });
+  }
+
+  const start = (ACCORDION_PAGE - 1) * ACCORDION_PAGE_SIZE;
+  const end = ACCORDION_PAGE * ACCORDION_PAGE_SIZE;
+  const dataPage = dataToRender.slice(start, end);
+
+  if (dataPage.length === 0 && ACCORDION_PAGE === 1) {
+    container.innerHTML = '<p style="padding: 1.5rem; text-align: center; color: var(--muted);">Nenhuma transação encontrada para os filtros atuais.</p>';
+    loadMoreWrapper.classList.add('hidden');
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  dataPage.forEach(group => {
+    fragment.appendChild(createAccordionGroup(group));
+  });
+  container.appendChild(fragment);
+
+  // Controla visibilidade do botão "Carregar Mais"
+  if (dataToRender.length > end) {
+    loadMoreWrapper.classList.remove('hidden');
+  } else {
+    loadMoreWrapper.classList.add('hidden');
+  }
+  
+  // Atualiza a barra de seleção
+  updateSelectionBar();
+}
+
+/**
+ * Cria um único grupo (cabeçalho + conteúdo) do acordeão.
+ * @param {object} group - O objeto do grupo.
+ * @returns {HTMLElement} - O elemento do grupo.
+ */
+function createAccordionGroup(group) {
+  const groupWrapper = document.createElement('div');
+  // Adiciona um atributo para busca local
+  groupWrapper.dataset.groupElName = group.name;
+  
+  const header = document.createElement('div');
+  header.className = 'accordion-group-header';
+  
+  // Checkbox de seleção em massa (agora no cabeçalho do grupo)
+  const checkboxLabel = document.createElement('label');
+  checkboxLabel.className = 'checkbox-label';
+  // Evita que o clique no checkbox abra o acordeão
+  checkboxLabel.addEventListener('click', e => {
+    e.stopPropagation();
+    // Pequeno delay para garantir que o estado 'checked' atualizou
+    setTimeout(updateSelectionBar, 0);
+  }); 
+  
+  checkboxLabel.innerHTML = `
+    <input type="checkbox" class="group-select-checkbox" data-group-name="${group.name}">
+    <span class="checkbox-custom">
+      <svg class="icon"><use href="#icon-check"></use></svg>
+    </span>
+  `;
+
+  // Nome do Grupo
+  const groupName = document.createElement('div');
+  groupName.className = 'group-name';
+  groupName.textContent = group.name;
+  if (group.isIgnored) {
+    groupName.classList.add('ignored-item');
+  }
+  
+  // Função para renomear
+  const renameGroup = () => {
+    const newName = prompt(`Renomear grupo "${group.name}":`, group.name);
+    if (newName && newName.trim() !== group.name) {
+      const oldKey = Object.keys(NAME_ALIASES).find(k => NAME_ALIASES[k] === group.name);
+      if (oldKey) {
+        NAME_ALIASES[oldKey] = newName;
+      } else {
+        showNotification(`Grupo ${group.name} renomeado para ${newName} (visualmente). Use o modal 'Mover' para criar aliases permanentes.`, 'warning');
+      }
+      document.getElementById('nameAliasesEditor').value = JSON.stringify(NAME_ALIASES, null, 2);
+      saveAliasesToStorage();
+      updateAll();
+    }
+  };
+
+  // Evento de Duplo Clique para Renomear
+  groupName.addEventListener('dblclick', e => {
+    e.stopPropagation();
+    renameGroup();
+  });
+
+  // Valores e Contagem (agora dentro de uma sub-grid para responsividade)
+  const valuesGrid = document.createElement('div');
+  valuesGrid.className = 'group-values-grid';
+
+  const groupCount = document.createElement('div');
+  groupCount.className = 'group-count';
+  groupCount.textContent = `${group.count} tx`;
+
+
+  const groupDebit = document.createElement('div');
+  groupDebit.className = 'group-value negative';
+  groupDebit.textContent = formatCurrency(group.debit);
+
+  const groupCredit = document.createElement('div');
+  groupCredit.className = 'group-value positive';
+  groupCredit.textContent = formatCurrency(group.credit);
+
+  // Conteúdo (Tabela de Transações)
+  const content = document.createElement('div');
+  content.className = 'accordion-group-content';
+  content.innerHTML = `
+    <table class="transaction-table">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Histórico</th>
+          <th style="text-align: right;">Crédito</th>
+          <th style="text-align: right;">Débito</th>
+          <th></th> <!-- Coluna de Ações -->
+        </tr>
+      </thead>
+      <tbody>
+        ${group.transactions.map((t) => `
+          <tr data-transaction-id="${t.id}">
+            <td>${formatDate(t.date)}</td>
+            <td>${t.hist}</td>
+            <td class="positive">${t.value > 0 ? formatCurrency(t.value) : ''}</td>
+            <td class="negative">${t.value < 0 ? formatCurrency(t.value) : ''}</td>
+            <td>
+              <button class="btn btn-icon btn-sm edit-transaction-btn" title="Editar esta transação">
+                <svg class="icon"><use href="#icon-edit"></use></svg>
+              </button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+
+  // Montagem do Header
+  header.appendChild(checkboxLabel);
+  header.appendChild(groupName);
+  
+  // Adiciona os valores à sub-grid
+  valuesGrid.appendChild(groupCount);
+  valuesGrid.appendChild(groupDebit);
+  valuesGrid.appendChild(groupCredit);
+  header.appendChild(valuesGrid);
+  
+  // Lógica de Abrir/Fechar
+  header.addEventListener('click', () => {
+    if (content.style.maxHeight) {
+      content.style.maxHeight = null;
+      header.classList.remove('active');
+    } else {
+      content.style.maxHeight = content.scrollHeight + 'px';
+      header.classList.add('active');
+    }
+  });
+
+  groupWrapper.appendChild(header);
+  groupWrapper.appendChild(content);
+
+  // Adiciona listener para os novos botões de editar transação
+  content.querySelectorAll('.edit-transaction-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const transactionId = e.target.closest('tr').dataset.transactionId;
+      openEditModal(transactionId);
+    });
+  });
+
+  return groupWrapper;
+}
+
+/**
+ * Atualiza a visibilidade e o contador da barra de ações.
+ */
+function updateSelectionBar() {
+  const selectedCheckboxes = document.querySelectorAll('.group-select-checkbox:checked');
+  const count = selectedCheckboxes.length;
+  const actionBar = document.getElementById('selection-action-bar');
+  const countEl = actionBar.querySelector('.selection-count');
+
+  if (count > 0) {
+    countEl.textContent = `${count} ${count === 1 ? 'item selecionado' : 'itens selecionados'}`;
+    actionBar.classList.add('visible');
+  } else {
+    actionBar.classList.remove('visible');
+  }
+}
+
+/**
+ * Obtém os nomes dos grupos selecionados.
+ * @returns {string[]}
+ */
+function getSelectedGroupNames() {
+  return Array.from(document.querySelectorAll('.group-select-checkbox:checked'))
+    .map(cb => cb.dataset.groupName);
+}
+
+function handleMoveSelected() {
+  const selectedGroups = getSelectedGroupNames();
+  if (selectedGroups.length === 0) return;
+
+  const allRawHists = selectedGroups.flatMap(groupName => {
+    const group = PROCESSED_DATA.find(g => g.name === groupName);
+    return group ? group.transactions.map(t => cleanRawName(t.hist)) : [];
+  });
+  
+  openMoveModal(allRawHists);
+}
+
+function handleIgnoreSelected() {
+  const selectedGroups = getSelectedGroupNames();
+  if (selectedGroups.length === 0) return;
+
+  let ignoredCount = 0;
+  selectedGroups.forEach(groupName => {
+    // Não permite ignorar grupos padrão
+    if (IGNORE_NAMES_REGEX.test(groupName)) return;
+
+    const key = canonicalKey(groupName);
+    // Ignora movendo para 'Pagamento Fatura'
+    NAME_ALIASES[key] = 'Pagamento Fatura';
+    ignoredCount++;
+  });
+
+  if (ignoredCount > 0) {
+    document.getElementById('nameAliasesEditor').value = JSON.stringify(NAME_ALIASES, null, 2);
+    saveAliasesToStorage();
+    showNotification(`${ignoredCount} grupos marcados como ignorados.`, 'success');
+    updateAll();
+  } else {
+    showNotification('Nenhum grupo elegível para ser ignorado foi selecionado.', 'warning');
+  }
+}
+
+function handlePrintSelected() {
+  const selectedGroups = getSelectedGroupNames();
+  if (selectedGroups.length === 0) return;
+  
+  const groupsToPrint = PROCESSED_DATA.filter(g => selectedGroups.includes(g.name));
+  
+  // Reutiliza a função de impressão, mas para múltiplos grupos
+  // Nota: handlePrintGroup precisa ser adaptada para aceitar um array
+  if (groupsToPrint.length > 0) {
+    // Por simplicidade, vamos imprimir apenas o primeiro selecionado por enquanto
+    // A impressão de múltiplos grupos requer uma lógica de layout mais complexa.
+    handlePrintGroup(groupsToPrint[0]); 
+    if (groupsToPrint.length > 1) {
+      showNotification('Impressão de múltiplos grupos ainda não implementada. Imprimindo o primeiro selecionado.', 'warning');
+    }
+  }
+}
+
+/**
+ * Gera uma página de impressão para um grupo específico.
+ * @param {object} group - O objeto do grupo a ser impresso.
+ */
+function handlePrintGroup(group) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showNotification('Não foi possível abrir a janela de impressão. Verifique se o seu navegador está bloqueando pop-ups.', 'error');
+    return;
+  }
+
+  // Ordena as transações por data (mais antigas primeiro)
+  const sortedTransactions = group.transactions.slice().sort((a, b) => a.date - b.date);
+  
+  const tableRows = sortedTransactions.map(t => `
+    <tr>
+      <td>${formatDate(t.date)}</td>
+      <td>${t.hist}</td>
+      <td class="value positive">${t.value > 0 ? formatCurrency(t.value) : '—'}</td>
+      <td class="value negative">${t.value < 0 ? formatCurrency(t.value) : '—'}</td>
+    </tr>
+  `).join('');
+
+  const totalCredit = formatCurrency(group.credit);
+  const totalDebit = formatCurrency(group.debit);
+  const totalBalance = formatCurrency(group.balance);
+  const printDate = new Date().toLocaleDateString('pt-BR');
+
+  const printContent = `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Impressão - ${group.name}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+          font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+          margin: 2rem;
+          color: #111;
+          line-height: 1.6;
+        }
+        .header {
+          margin-bottom: 2rem;
+          border-bottom: 3px solid #333;
+          padding-bottom: 1rem;
+        }
+        h1 { 
+          font-size: 1.8rem;
+          margin-bottom: 0.5rem;
+        }
+        .meta {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.9rem;
+          color: #666;
+          margin-top: 1rem;
+        }
+        table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          font-size: 0.9rem;
+          margin-bottom: 2rem;
+        }
+        th, td { 
+          padding: 0.75rem; 
+          text-align: left; 
+          border-bottom: 1px solid #ddd;
+        }
+        th { 
+          background-color: #f5f5f5; 
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 0.8rem;
+          letter-spacing: 0.05em;
+        }
+        tbody tr:nth-child(even) {
+          background-color: #fafafa;
+        }
+        tr:last-child td { 
+          border-bottom: 2px solid #333;
+        }
+        .value { 
+          text-align: right; 
+          font-family: 'Courier New', monospace;
+          font-weight: 500;
+        }
+        .positive { color: #16a34a; }
+        .negative { color: #dc2626; }
+        .summary { 
+          margin-top: 2rem; 
+          padding: 1.5rem;
+          background-color: #f9f9f9;
+          border-left: 4px solid #3b82f6;
+          border-radius: 4px;
+        }
+        .summary-item { 
+          display: flex; 
+          justify-content: space-between; 
+          font-size: 1rem; 
+          padding: 0.75rem 0;
+          border-bottom: 1px solid #eee;
+        }
+        .summary-item:last-child {
+          border-bottom: none;
+        }
+        .summary-item strong { 
+          font-weight: 600;
+        }
+        .total-item {
+          font-size: 1.1rem;
+          font-weight: 700;
+          padding: 1rem 0 !important;
+          border-top: 2px solid #ddd !important;
+          background-color: #fff !important;
+        }
+        @media print {
+          body { 
+            margin: 1rem;
+            font-size: 10pt;
+          }
+          h1 { font-size: 1.2rem; }
+          table { font-size: 9pt; }
+          th { background-color: #e0e0e0; }
+          .summary { 
+            page-break-inside: avoid;
+            border-left: 2px solid #999;
+          }
+          .meta { 
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            font-size: 8pt;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>📋 Relatório de Transações</h1>
+        <p style="color: #666; margin: 0.5rem 0;">Grupo: <strong>${group.name}</strong></p>
+        <div class="meta">
+          <span>Total: ${group.count} transações</span>
+          <span>Gerado em: ${printDate}</span>
+        </div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 12%;">Data</th>
+            <th style="width: 50%;">Histórico</th>
+            <th style="width: 19%; text-align: right;">Crédito</th>
+            <th style="width: 19%; text-align: right;">Débito</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <div class="summary-item">
+          <span>Total de Créditos:</span>
+          <strong class="positive">${totalCredit}</strong>
+        </div>
+        <div class="summary-item">
+          <span>Total de Débitos:</span>
+          <strong class="negative">${totalDebit}</strong>
+        </div>
+        <div class="summary-item total-item">
+          <span>Saldo do Grupo:</span>
+          <strong style="color: ${group.balance > 0 ? '#16a34a' : group.balance < 0 ? '#dc2626' : '#666'}">
+            ${totalBalance}
+          </strong>
+        </div>
+      </div>
+
+      <script>
+        window.onafterprint = function() { 
+          window.close(); 
+        };
+        // Aguarda a página renderizar antes de imprimir
+        setTimeout(() => {
+          window.print();
+        }, 500);
+      </script>
+    
+    
+  `;
+
+  printWindow.document.write(printContent);
+  printWindow.document.close();
+}
+
+
+</body></html>
