@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Finanças do Biru — Versão Consolidada</title>
+
+<!-- LIBS DE GRÁFICOS E EXPORTAÇÃO -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- LIBS DO NOVO HEATMAP (D3) - Mantidas caso precise no futuro -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/d3-calendar-heatmap@1.2.19/d3-calendar-heatmap.css">
+<script src="https://cdn.jsdelivr.net/npm/d3-calendar-heatmap@1.2.19/d3-calendar-heatmap.min.js"></script>
+
+<style>
+
+  /* --- Ícones SVG Embutidos --- */  /* Isso substitui todos os emojis por SVGs limpos, como solicitado */
+  .icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    stroke-width: 0;
+    stroke: currentColor;
+    fill: currentColor;
+    vertical-align: middle;
+    margin-bottom: 0.125em;
+  }
+  .icon-sm { width: 0.9em; height: 0.9em; }
+  .icon-lg { width: 1.25em; height: 1.25em; }
+
+  /* --- Estilo Base (Consolidado) --- */
+  :root{
+    --bg:#071428; --card:#0d1b2a; --muted:#94a3b8; --accent:#3B82F6; --panel:#081223;
+    --glass: rgba(255,255,255,0.02);
+    --text: #e6eef8;
+    --green: #10B981;
+    --red: #EF4444;
+    --orange: #F59E0B;
+    --cyan: #06B6D4;
+    --chart-line: #38BDF8;
+    --chart-grid: rgba(255, 255, 255, 0.05);
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  }
+  body.light{
+    --bg:#f6f7fb; --card:#ffffff; --muted:#475569; --accent:#2563eb; --panel:#ffffff; --glass: rgba(0,0,0,0.03);
+    --text: #0b1220;
+    color: #0b1220;
+    --chart-line: #0EA5E9;
+    --chart-grid: rgba(0, 0, 0, 0.05);
+    --orange: #D97706;
+    --cyan: #0891B2;
+  }
+  *{ box-sizing:border-box; }
+  ::selection { background-color: var(--accent); color: white; }
+
+  body{
+    margin:0; font-family: var(--font-sans); color:var(--text); background:var(--bg);
+    -webkit-font-smoothing:antialiased; transition: background 0.2s, color 0.2s;
+  }
+  main { max-width:1400px; margin: 1.5rem auto; padding: 0 1.5rem; }
+  h1, h2, h3 { margin: 0; font-weight: 600; }
+  h3 { font-size: 1.1rem; margin-bottom: 1rem; }
+  p { line-height: 1.6; }
+  a { color: var(--accent); text-decoration: none; }
+
+  .grid-layout { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+  .span-12 { grid-column: span 12 / span 12; }
+  .span-8 { grid-column: span 8 / span 8; }
+  .span-6 { grid-column: span 6 / span 6; }
+  .span-4 { grid-column: span 4 / span 4; }
+  .span-3 { grid-column: span 3 / span 3; }
+  
+  /* --- Notificação (Substitui Alert) --- */
+  #notification-bar {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    background-color: var(--accent);
+    color: white;
+    font-weight: 500;
+    z-index: 9999;
+    transition: top 0.4s ease-in-out;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  }
+  #notification-bar.show { top: 20px; }
+  #notification-bar.success { background-color: var(--green); }
+  #notification-bar.error { background-color: var(--red); }
+  #notification-bar.warning { background-color: var(--orange); }
+
+  /* --- Cabeçalho --- */
+  header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+    padding: 1rem 1.5rem; background-color: var(--card); border-radius: 0.75rem;
+    margin: 1.5rem auto; max-width: 1400px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  }
+  .light header { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03); }
+  
+  .logo { font-size: 1.25rem; font-weight: 700; color: var(--text); }
+  .logo span { color: var(--accent); }
+  .header-controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-left: auto; }
+  .control-group { display: flex; align-items: center; gap: 0.75rem; }
+  
+  /* Botões */
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--font-sans); font-size: 0.875rem; font-weight: 500;
+    padding: 0.5rem 1rem; border: none; border-radius: 0.5rem;
+    background-color: var(--glass); color: var(--muted);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn:hover { background-color: var(--accent); color: white; }
+  .btn-primary { background-color: var(--accent); color: white; }
+  .btn-primary:hover { background-color: #1d4ed8; }
+  .light .btn-primary:hover { background-color: #3b82f6; }
+  
+  .btn.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+  .btn.btn-icon { padding: 0.5rem; }
+  
+  .file-upload-wrapper {
+    position: relative; overflow: hidden; display: inline-block;
+    background-color: var(--accent); color: white; border-radius: 0.5rem;
+    cursor: pointer;
+  }
+  .file-upload-wrapper input[type="file"] {
+    font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer;
+  }
+  .file-upload-label {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500;
+  }
+  #file-status { 
+    font-size: 1.25rem;
+    transition: transform 0.3s; 
+  }
+  #file-status.hidden { display: none; }
+  #file-status.error { color: var(--red); transform: scale(1.2); }
+  #file-status.success { color: var(--green); transform: scale(1.2); }
+  
+  /* --- Cards de Sumário --- */
+  .card {
+    background: var(--card); border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05);
+    transition: all 0.2s;
+  }
+  .light .card { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.03), 0 1px 2px 0 rgba(0,0,0,0.03); }
+  
+  .summary-card { padding: 1.5rem; }
+  .summary-card h2 {
+    font-size: 0.9rem; font-weight: 500; color: var(--muted);
+    margin: 0 0 0.5rem 0;
+  }
+  .summary-card .value {
+    font-size: 2rem; font-weight: 700; margin: 0;
+  }
+  .summary-card .value.positive { color: var(--green); }
+  .summary-card .value.negative { color: var(--red); }
+  .summary-card .value.neutral { color: var(--text); }
+  
+  /* --- Filtros --- */
+  .filter-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+    background-color: var(--card); padding: 1rem; border-radius: 0.75rem;
+  }
+  .search-box {
+    position: relative; flex-grow: 1;
+  }
+  .search-box .icon {
+    position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 0.6rem 0.75rem 0.6rem 2.25rem;
+    border: 1px solid var(--bg);
+    background-color: var(--bg);
+    border-radius: 0.5rem;
+    color: var(--text);
+    font-family: var(--font-sans); font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent); background-color: var(--panel);
+    outline: none; box-shadow: 0 0 0 2px var(--accent);
+  }
+  
+  .filter-group {
+    display: flex; flex-wrap: wrap; gap: 1rem; align-items: center;
+  }
+  
+  /* Checkboxes customizados */
+  .checkbox-label {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.875rem; color: var(--muted); cursor: pointer;
+    user-select: none;
+  }
+  .checkbox-label input { display: none; }
+  .checkbox-label .checkbox-custom {
+    width: 1.15rem; height: 1.15rem; border: 2px solid var(--muted);
+    border-radius: 0.25rem; display: flex; align-items: center;
+    justify-content: center; transition: all 0.2s;
+  }
+  .checkbox-label .checkbox-custom .icon {
+    display: none; color: white; width: 0.8rem; height: 0.8rem;
+  }
+  .checkbox-label input:checked + .checkbox-custom {
+    background-color: var(--accent); border-color: var(--accent);
+  }
+  .checkbox-label input:checked + .checkbox-custom .icon { display: block; }
+  
+  /* Filtro de Ano */
+  .year-filter-grid {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+  }
+  .year-card {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem; font-weight: 500;
+    border-radius: 0.5rem;
+    background-color: var(--glass);
+    color: var(--muted);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .year-card:hover {
+    background-color: var(--accent); color: white;
+  }
+  .year-card.active {
+    background-color: var(--accent); color: white;
+    border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent);
+  }
+  
+  /* --- Gráficos --- */
+  .chart-container {
+    background-color: var(--card); padding: 1.5rem; border-radius: 0.75rem;
+    position: relative;
+    /* Dica: min-height ajuda a evitar "pulos" de layout antes do gráfico carregar */
+    min-height: 350px; 
+  }
+  .chart-container canvas { max-height: 350px; }
+  .chart-title {
+    font-size: 1.1rem; font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  
+  /* --- Heatmap (Novo) --- */
+  #calendar-heatmap-container {
+    background-color: var(--card); padding: 1.5rem; border-radius: 0.75rem;
+  }
+  /* Estilos específicos do D3 Heatmap */
+  .calendar-heatmap { font-family: var(--font-sans); }
+  .calendar-heatmap .heatmap-label { fill: var(--muted); font-size: 0.75rem; }
+  .calendar-heatmap .heatmap-day {
+    stroke: var(--bg);
+    stroke-width: 2px;
+    shape-rendering: geometricPrecision;
+    rx: 2; ry: 2;
+    transition: fill 0.1s;
+  }
+  .calendar-heatmap .heatmap-day-empty { fill: var(--glass); }
+  .calendar-heatmap .heatmap-day[data-toggle="tooltip"]:hover {
+    stroke: var(--accent);
+    stroke-width: 1px;
+  }
+  .calendar-heatmap text.heatmap-month,
+  .calendar-heatmap text.heatmap-label {
+    fill: var(--muted);
+    font-size: 0.65rem;
+  }
+  /* Tooltip do Heatmap */
+  .heatmap-tooltip {
+    background: #000; color: #fff;
+    padding: 5px 10px; border-radius: 4px;
+    font-size: 0.8rem;
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .light .heatmap-tooltip { background: #fff; color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .heatmap-tooltip.visible { opacity: 1; }
+  
+  /* --- Acordeão de Transações --- */
+  .accordion-header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+    margin-top: 1.5rem; margin-bottom: 1rem;
+  }
+  .accordion-title { font-size: 1.25rem; font-weight: 600; margin: 0; }
+  .sort-controls { display: flex; gap: 0.5rem; margin-left: auto; }
+  .sort-btn {
+    display: flex; align-items: center; gap: 0.3rem;
+    font-size: 0.8rem; font-weight: 500;
+    color: var(--muted); background: var(--glass);
+    padding: 0.4rem 0.7rem; border: none; border-radius: 0.5rem; cursor: pointer;
+  }
+  .sort-btn:hover { background: var(--card); color: var(--text); }
+  .sort-btn.active { color: var(--accent); background: var(--card); }
+  
+  .accordion-wrapper {
+    background-color: var(--card);
+    border-radius: 0.75rem;
+    overflow: hidden; /* Garante que os filhos respeitem o border-radius */
+  }
+  
+  .accordion-group-header {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr 1fr 1fr 1fr;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background-color: var(--glass);
+    border-bottom: 1px solid var(--bg);
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .accordion-group-header:hover { background-color: rgba(255,255,255, 0.04); }
+  .light .accordion-group-header:hover { background-color: rgba(0,0,0, 0.03); }
+  
+  .accordion-group-header .group-name {
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .accordion-group-header .group-name.ignored-item {
+    color: var(--muted);
+    font-style: italic;
+  }
+  
+  .group-value { text-align: right; font-weight: 500; font-size: 0.9rem; }
+  .group-value.positive { color: var(--green); }
+  .group-value.negative { color: var(--red); }
+  .group-value.neutral { color: var(--text); }
+  .group-count { color: var(--muted); font-size: 0.85rem; text-align: right; }
+  
+  .group-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+  .group-controls .btn-icon {
+    background-color: transparent;
+    color: var(--muted);
+    padding: 0.3rem;
+  }
+  .group-controls .btn-icon:hover {
+    background-color: var(--bg);
+    color: var(--text);
+  }
+  
+  .accordion-group-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+  .transaction-table { width: 100%; border-collapse: collapse; }
+  .transaction-table th, .transaction-table td {
+    padding: 0.75rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--bg);
+    font-size: 0.875rem;
+  }
+  .transaction-table th {
+    font-weight: 600; color: var(--muted); font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .transaction-table tr:last-child td { border-bottom: none; }
+  .transaction-table td:nth-child(2) { color: var(--text); } /* Histórico */
+  .transaction-table td:nth-child(3) { text-align: right; } /* Crédito */
+  .transaction-table td:nth-child(4) { text-align: right; } /* Débito */
+  
+  #load-more-wrapper {
+    text-align: center;
+    padding: 1.5rem;
+  }
+  
+  /* --- Modais --- */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none; /* Controlado por JS */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .modal-overlay.active { display: block; opacity: 1; }
+  
+  .modal-content {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--card);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1rem;
+  }
+  .modal-title { font-size: 1.25rem; font-weight: 600; }
+  .modal-close {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; padding: 0.5rem;
+  }
+  .modal-close:hover { color: var(--text); }
+  
+  /* Modal de Mover */
+  #move-search-box { position: relative; }
+  #move-group-search { width: 100%; padding-right: 2.5rem; }
+  #move-search-clear {
+    position: absolute; right: 0; top: 0;
+    height: 100%; padding: 0 0.75rem;
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; display: none; /* JS controla */
+  }
+  #move-group-list {
+    max-height: 200px; overflow-y: auto;
+    border: 1px solid var(--bg); border-radius: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  .group-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--bg);
+  }
+  .group-item:last-child { border-bottom: none; }
+  .group-item:hover { background-color: var(--bg); }
+  .group-item.selected {
+    background-color: var(--accent);
+    color: white;
+    font-weight: 500;
+  }
+  .modal-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 1.5rem;
+  }
+  
+  /* Modal Editor de Aliases */
+  #nameAliasesEditor {
+    width: 100%; height: 300px;
+    background-color: var(--bg);
+    border: 1px solid var(--panel);
+    border-radius: 0.5rem;
+    color: var(--text);
+    font-family: monospace;
+    font-size: 0.85rem;
+    padding: 0.75rem;
+    resize: vertical;
+  }
+  
+  /* Modal de Resumo (Novo) */
+  #summary-chart-container {
+    position: relative;
+    max-height: 300px;
+    margin: 1.5rem auto;
+  }
+  #summary-text {
+    font-size: 1rem;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.6;
+  }
+  #summary-text strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* --- Responsividade --- */
+  @media (max-width: 1200px) {
+    .span-8 { grid-column: span 12 / span 12; }
+    .span-4 { grid-column: span 12 / span 12; }
+  }
+  @media (max-width: 900px) {
+    .span-6 { grid-column: span 12 / span 12; }
+    .accordion-group-header {
+      grid-template-columns: auto 1fr 1fr;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+    }
+    .accordion-group-header .group-name { grid-column: 1 / -1; font-size: 1rem; }
+    .accordion-group-header .group-count { grid-column: 1 / 2; text-align: left; }
+    .accordion-group-header .group-value { grid-column: 2 / 3; }
+    .group-controls { grid-column: 3 / 4; }
+    .transaction-table { display: block; overflow-x: auto; } /* Scroll horizontal em tabelas */
+  }
+  @media (max-width: 768px) {
+    main, header { margin: 1rem; padding: 0 1rem; }
+    header { padding: 1rem; }
+    .logo { font-size: 1.1rem; }
+    .header-controls { margin-left: 0; width: 100%; justify-content: center; }
+    .span-3 { grid-column: span 6 / span 6; }
+    .summary-card .value { font-size: 1.5rem; }
+    .summary-card h2 { font-size: 0.8rem; }
+    .sort-controls { margin-left: 0; }
+    .accordion-title { margin-left: auto; }
+  }
+  
+  /* Classes utilitárias */
+  .hidden { display: none !important; }
+
+</style>
+</head>
+
+<!-- Começa com 'dark' por padrão, o JS corrige para 'light' se estiver no localStorage -->
+<body class="dark">
+
+<!-- SVGs embutidos para ícones -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></symbol>
+  <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></symbol>
+  <symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></symbol>
+  <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></symbol>
+  <symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></symbol>
+  <symbol id="icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></symbol>
+  <symbol id="icon-pie-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></symbol>
+  <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></symbol>
+  <symbol id="icon-move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 8 22 12 18 16"></polyline><polyline points="6 8 2 12 6 16"></polyline><line x1="2" y1="12" x2="22" y2="12"></line></symbol>
+  <symbol id="icon-ignore" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></symbol>
+  <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></symbol>
+  <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
+  <symbol id="icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></symbol>
+  <symbol id="icon-chevron-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></symbol>
+  <symbol id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></symbol>
+</svg>
+
+<!-- Barra de Notificação (Substitui Alert) -->
+<div id="notification-bar"></div>
+
+<!-- Cabeçalho -->
+<header>
+  <h1 class="logo">Finanças<span>Biru</span></h1>
+  <div class="header-controls">
+    <div class="control-group">
+      <label for="fileInput" class="file-upload-wrapper">
+        <span class="file-upload-label">
+          <svg class="icon"><use href="#icon-upload"></use></svg>
+          Carregar CSV
+        </span>
+        <input type="file" id="fileInput" accept=".csv" />
+      </label>
+      <span id="file-status" class="hidden"></span>
+    </div>
+
+    <div class="control-group">
+      <button class="btn btn-sm" id="importBackupBtn">
+        <svg class="icon"><use href="#icon-download"></use></svg>
+        Importar Backup
+      </button>
+      <input type="file" id="backupInput" accept=".json" class="hidden" />
+      <button class="btn btn-sm" id="exportBackupBtn">
+        <svg class="icon"><use href="#icon-upload"></use></svg>
+        Exportar Backup
+      </button>
+    </div>
+
+    <div class="control-group">
+      <button class="btn btn-sm" id="summaryButton">
+        <svg class="icon"><use href="#icon-pie-chart"></use></svg>
+        Resumo
+      </button>
+      <button class="btn btn-sm" id="aliasEditorBtn">
+        <svg class="icon"><use href="#icon-edit"></use></svg>
+        Aliases
+      </button>
+      <button class="btn btn-sm" id="printScreenBtn">
+        <svg class="icon"><use href="#icon-image"></use></svg>
+        Print
+      </button>
+    </div>
+
+    <div class="control-group">
+      <button class="btn btn-icon" id="themeToggle" title="Mudar Tema">
+        <svg class="icon icon-lg"><use href="#icon-moon"></use></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Cards de Sumário -->
+  <div class="grid-layout">
+    <div class="card summary-card span-3">
+      <h2>Total Crédito</h2>
+      <p id="totalCredit" class="value positive">R$ 0,00</p>
+    </div>
+    <div class="card summary-card span-3">
+      <h2>Total Débito</h2>
+      <p id="totalDebit" class="value negative">R$ 0,00</p>
+    </div>
+    <div class="card summary-card span-3">
+      <h2>Saldo do Período</h2>
+      <p id="totalBalance" class="value neutral">R$ 0,00</p>
+    </div>
+    <div class="card summary-card span-3">
+      <h2>Transações</h2>
+      <p id="totalTransactions" class="value neutral">0</p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filter-bar span-12" style="margin-top: 1.5rem;">
+    <div class="search-box">
+      <svg class="icon"><use href="#icon-search"></use></svg>
+      <input type="text" id="mainSearch" placeholder="Buscar em grupos ou transações...">
+    </div>
+    <div class="filter-group">
+      <label class="checkbox-label">
+        <input type="checkbox" id="groupUnknown">
+        <span class="checkbox-custom">
+          <svg class="icon"><use href="#icon-check"></use></svg>
+        </span>
+        Agrupar Desconhecidos
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="showIgnored" checked>
+        <span class="checkbox-custom">
+          <svg class="icon"><use href="#icon-check"></use></svg>
+        </span>
+        Exibir Ignorados
+      </label>
+      <button class="btn btn-sm" id="clearFiltersBtn">
+        <svg class="icon"><use href="#icon-refresh"></use></svg>
+        Limpar
+      </button>
+    </div>
+  </div>
+  
+  <!-- Filtro de Ano -->
+  <div class="year-filter-grid span-12" id="year-filter-container" style="margin-top: 1.5rem;">
+    <!-- Cards de ano serão injetados aqui -->
+  </div>
+
+  <!-- Gráficos -->
+  <div class="grid-layout" style="margin-top: 1.5rem;">
+    <div class="span-8">
+      <div class="chart-container">
+        <h3 class="chart-title">Evolução Diária (Saldo)</h3>
+        <canvas id="chartDaily"></canvas>
+      </div>
+    </div>
+    <div class="span-4">
+      <div class="chart-container">
+        <h3 class="chart-title">Evolução Mensal (C/D)</h3>
+        <canvas id="chartMonthly"></canvas>
+      </div>
+    </div>
+
+    <!-- 
+      ===============================================================
+      O "TREM DO CÃO" FOI COMENTADO A SEU PEDIDO (EDU) KKK
+      ===============================================================
+      
+    <div class="span-8">
+      <div id="calendar-heatmap-container">
+         <h3 class="chart-title">Calendário de Atividade Financeira (Débitos)</h3>
+         <div id="calendar-heatmap"></div>
+         <div id="heatmap-tooltip" class_name="heatmap-tooltip" style="opacity: 0;"></div>
+      </div>
+    </div> 
+    
+    -->
+    
+    <div class="span-4">
+      <div class="chart-container">
+        <h3 class="chart-title">Top 10 Destinatários/Fontes</h3>
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Acordeão de Transações -->
+  <div class="accordion-header span-12">
+    <h2 class="accordion-title">Transações Agrupadas</h2>
+    <div class="sort-controls">
+      <button class="sort-btn" data-sort="count">
+        Cont. <span class="sort-indicator"></span>
+      </button>
+      <button class="sort-btn active" data-sort="name">
+        Nome <span class="sort-indicator"></span>
+      </button>
+      <button class="sort-btn" data-sort="debit">
+        Débito <span class="sort-indicator"></span>
+      </button>
+      <button class="sort-btn" data-sort="credit">
+        Crédito <span class="sort-indicator"></span>
+      </button>
+    </div>
+  </div>
+  
+  <div class="accordion-wrapper span-12" id="accordion-container">
+    <!-- Grupos serão injetados aqui -->
+  </div>
+  
+  <div id="load-more-wrapper" class="span-12 hidden">
+    <button class="btn" id="loadMoreBtn">Carregar Mais 20</button>
+  </div>
+
+</main>
+
+<!-- Modal: Mover Transação (Single e Massa) -->
+<div id="moveTransactionModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title" id="move-modal-title">Mover Transação</h3>
+      <button class="modal-close" id="move-modal-close-btn">
+        <svg class="icon icon-lg"><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p id="move-modal-description" style="color: var(--muted); font-size: 0.9rem; margin-top: 0;">
+        Selecione um grupo de destino para as transações.
+      </p>
+      <div id="move-search-box">
+        <input type="text" id="move-group-search" placeholder="Buscar grupo ou criar novo...">
+        <button id="move-search-clear">
+          <svg class="icon"><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+      <div id="move-group-list">
+        <!-- Lista de grupos será injetada aqui -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <label class="checkbox-label">
+        <input type="checkbox" id="saveAliasCheckbox" checked>
+        <span class="checkbox-custom">
+          <svg class="icon"><use href="#icon-check"></use></svg>
+        </span>
+        Salvar como alias
+      </label>
+      <button class="btn btn-primary" id="confirmMoveBtn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editor de Aliases -->
+<div id="aliasEditorModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Editor de Aliases (JSON)</h3>
+      <button class="modal-close" id="alias-editor-close-btn">
+        <svg class="icon icon-lg"><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0;">
+        Edite as regras de alias. O formato é <code>"nome_sujo": "Nome Limpo"</code>.
+      </p>
+      <textarea id="nameAliasesEditor"></textarea>
+    </div>
+    <div class="modal-footer" style="justify-content: flex-end;">
+      <button class="btn btn-primary" id="saveAliasesBtn">
+        <svg class="icon"><use href="#icon-save"></use></svg>
+        Salvar e Reprocessar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Resumo (Novo) -->
+<div id="summaryModal" class="modal-overlay">
+  <div class="modal-content" style="max-width: 400px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Resumo do Período</h3>
+      <button class="modal-close" id="summary-modal-close-btn">
+        <svg class="icon icon-lg"><use href="#icon-close"></use></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+       <div id="summary-chart-container">
+         <canvas id="summaryChart"></canvas>
+       </div>
+       <p id="summary-text">Carregando resumo...</p>
+    </div>
+  </div>
+</div>
+
+<!-- O SCRIPT SERÁ CARREGADO AQUI -->
+<script src="financas_app.js"></script>
+
+</body>
+</html>
