@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dashboard_FINAL_v2.0 — Finanças do Biru</title>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<style>
+:root{
+  --bg:#071428; --card:#0d1b2a; --text:#e6eef8; --muted:#94a3b8; --accent:#06b6d4; --green:#10B981; --red:#EF4444; --glass:rgba(255,255,255,0.03);
+}
+body.light{ --bg:#f6f7fb; --card:#fff; --text:#0b1220; --muted:#475569; --accent:#2563eb; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,Segoe UI,Roboto; background:linear-gradient(180deg,var(--bg),#071827); color:var(--text); min-height:100vh;padding:18px}
+.wrap{max-width:1200px;margin:0 auto}
+.header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap}
+.title{font-weight:700;font-size:18px}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--accent);color:#fff;padding:8px 10px;border-radius:8px;border:0;cursor:pointer}
+.btn-ghost{background:transparent;border:1px solid var(--glass);color:var(--muted);padding:7px 10px;border-radius:8px;cursor:pointer}
+.card{background:linear-gradient(180deg,var(--glass),rgba(255,255,255,0.01));border:1px solid var(--glass);padding:12px;border-radius:10px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.small{font-size:12px;color:var(--muted)}
+.search-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.search-row input[type="text"]{padding:8px;border-radius:8px;border:1px solid var(--glass);background:var(--card);color:var(--text)}
+.chart-wrap{height:300px;margin-bottom:12px}
+.accordion{border-radius:8px;overflow:hidden;border:1px solid var(--glass)}
+.accordion-item{padding:10px;border-bottom:1px solid var(--glass);display:flex;justify-content:space-between;align-items:center}
+.accordion-item:last-child{border-bottom:0}
+.tx-hist{flex:1;margin:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-amount{width:110px;text-align:right;flex-shrink:0}
+.footer-row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.heatmap-grid{display:grid;grid-template-columns:repeat(30,1fr);gap:4px;margin-top:8px}
+.heat-cell{height:18px;background:var(--glass);border-radius:3px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:999;visibility:hidden;opacity:0;transition:all .18s}
+.modal.active{visibility:visible;opacity:1}
+.modal-box{background:var(--card);padding:16px;border-radius:8px;max-width:520px;width:92%}
+.kv{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="header">
+    <div>
+      <div class="title">Finanças do Biru — Dashboard_FINAL_v2.0</div>
+      <div class="small">Offline · Parser Bradesco robusto · aliases localStorage</div>
+    </div>
+
+    <div class="controls">
+      <label class="btn-ghost" title="Importar CSV">
+        <input id="fileInput" type="file" accept=".csv,text/csv" style="display:none"/>
+        Importar CSV
+      </label>
+      <button id="toggleTheme" class="btn-ghost">Dark/Light</button>
+      <button id="exportBackup" class="btn-ghost">Exportar Backup</button>
+      <button id="importBackupBtn" class="btn-ghost">Importar Backup</button>
+      <button id="clearStorage" class="btn-ghost">Limpar Storage</button>
+    </div>
+  </header>
+
+  <!-- resumo -->
+  <div class="grid">
+    <div class="card"><div class="small">Total Entradas</div><h3 id="totalIn">R$ 0,00</h3></div>
+    <div class="card"><div class="small">Total Saídas</div><h3 id="totalOut">R$ 0,00</h3></div>
+    <div class="card"><div class="small">Saldo</div><h3 id="saldo">R$ 0,00</h3></div>
+  </div>
+
+  <!-- filtros e pesquisa -->
+  <div class="card">
+    <div class="search-row">
+      <input id="searchName" type="text" placeholder="Buscar histórico / alias..."/>
+      <input id="dateFrom" type="date"/>
+      <input id="dateTo" type="date"/>
+      <button id="applyFilter" class="btn-ghost">Aplicar</button>
+      <button id="clearFilter" class="btn-ghost">Limpar</button>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <div class="small">Top</div>
+        <select id="topN" style="padding:6px;border-radius:6px;background:var(--card);border:1px solid var(--glass)">
+          <option>10</option><option selected>15</option><option>20</option><option>50</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- charts -->
+  <div class="card">
+    <h4>Evolução Diária</h4>
+    <div class="chart-wrap"><canvas id="dailyChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h4>Evolução Mensal</h4>
+    <div class="chart-wrap"><canvas id="monthChart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h4>Top <span id="topCount">15</span></h4>
+    <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+  </div>
+
+  <!-- heatmap + anos -->
+  <div class="card">
+    <h4>Heatmap (double-click para detalhes)</h4>
+    <div id="heatmap" class="heatmap-grid" style="grid-template-columns:repeat(53,1fr)"></div>
+  </div>
+
+  <!-- acordeão transações (paginado) -->
+  <div class="card">
+    <h4>Transações</h4>
+    <div id="accordion" class="accordion"></div>
+    <div style="margin-top:8px;display:flex;justify-content:center">
+      <button id="loadMore" class="btn-ghost">Ver Mais</button>
+    </div>
+  </div>
+
+  <div style="height:24px"></div>
+
+</div>
+
+<!-- modais -->
+<div id="modal" class="modal"><div class="modal-box" id="modalBox"></div></div>
+
+<script>
+/*
+  Dashboard_FINAL_v2.0
+  - parserBradesco(file) -> returns array of tx {date, hist, credit, debit, rawIndex}
+  - supports iso-8859-1 fallback, separators ; or tab
+  - merges continuation lines (line starting without date pattern)
+  - aliases stored in localStorage under 'biru_aliases'
+  - transactions stored in memory only; backup export/import as JSON
+  - accordion pagination: render 20 at a time; "Ver Mais" loads next batch
+*/
+
+/* --------------------
+   Helpers: money/date
+   -------------------- */
+const moneyToNumber = s => {
+  if(!s) return 0;
+  s = String(s).replace(/\s/g,'').replace(/\./g,'').replace(',','.');
+  const n = parseFloat(s.replace(/[^\d.-]/g,''));
+  return isNaN(n)?0:n;
+};
+const fmtBR = n => {
+  return n===0? 'R$ 0,00' : n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+};
+const parseDateBr = (v) => {
+  // accepts dd/mm/yyyy or yyyy-mm-dd
+  if(!v) return null;
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(v)){
+    const [d,m,y]=v.split('/');
+    return new Date(y,parseInt(m,10)-1,parseInt(d,10));
+  } else {
+    const d = new Date(v);
+    return isNaN(d)?null:d;
+  }
+}
+
+/* --------------------
+   Alias system
+   -------------------- */
+const ALIAS_KEY='biru_aliases_v2';
+let aliases = {}; // name -> canonical
+function loadAliases(){
+  try{
+    const raw = localStorage.getItem(ALIAS_KEY);
+    if(raw) aliases = JSON.parse(raw);
+    else {
+      // preload example aliases (you can expand)
+      aliases = {
+        "PGTO PIX - CARLOS":"Carlos Eduardo",
+        "TRANSFERENCIA MARIA":"Maria Inez"
+      };
+      localStorage.setItem(ALIAS_KEY, JSON.stringify(aliases));
+    }
+  }catch(e){ aliases={}; }
+}
+function saveAliases(){ localStorage.setItem(ALIAS_KEY, JSON.stringify(aliases)); }
+function applyAlias(h){
+  if(!h) return h;
+  for(const k in aliases){
+    if(h.toUpperCase().includes(k.toUpperCase())) return aliases[k];
+  }
+  return h;
+}
+
+/* --------------------
+   Parser robusto Bradesco
+   -------------------- */
+async function readFileWithEncodings(file){
+  // Try default (UTF-8) then fallback to iso-8859-1
+  const buf = await file.arrayBuffer();
+  try{
+    const txt = new TextDecoder('utf-8').decode(buf);
+    // quick sanity: if we have many   characters, try iso fallback
+    if((txt.match(/ /g)||[]).length > 5){
+      throw new Error('bad utf8');
+    }
+    return txt;
+  }catch(_){
+    // fallback
+    try{
+      const txt2 = new TextDecoder('iso-8859-1').decode(buf);
+      return txt2;
+    }catch(e){
+      return '';
+    }
+  }
+}
+
+function detectSeparator(sample){
+  const sc = (sample.match(/;/g)||[]).length;
+  const st = (sample.match(/\t/g)||[]).length;
+  return sc >= st ? ';' : '\t';
+}
+
+function splitCsvLine(line, sep){
+  // naive split, ok for Bradesco simple CSV (no quoted commas expected)
+  if(sep === '\t') return line.split('\t');
+  // semicolon: respect quoted fields
+  const out=[]; let cur=''; let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='\"') { q = !q; continue; }
+    if(ch===sep && !q){ out.push(cur); cur=''; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+function isDateCell(s){
+  if(!s) return false;
+  s = s.trim();
+  return /^\d{2}\/\d{2}\/\d{4}$/.test(s) || /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+async function parserBradesco(file){
+  const txt = await readFileWithEncodings(file);
+  const lines = txt.split(/\r?\n/).map(l=>l.replace(/\u00A0/g,' ').trimEnd());
+  // try detect header row with DATA;HISTORICO;CREDITO... else fallback to guessing columns
+  const sample = lines.slice(0,20).join('\n');
+  const sep = detectSeparator(sample);
+  // find header index
+  let headerIdx = lines.findIndex(l => /DATA/i.test(l) && /HISTORICO/i.test(l));
+  let headers = [];
+  if(headerIdx >= 0){
+    headers = splitCsvLine(lines[headerIdx], sep).map(h=>h.trim().toUpperCase());
+  } else {
+    // fallback: use first non-empty as header-like
+    headerIdx = 0;
+    headers = splitCsvLine(lines[0], sep).map(h=>h.trim().toUpperCase());
+  }
+
+  // map columns
+  function findCol(names){
+    for(const n of names){
+      const idx = headers.findIndex(h => h.includes(n));
+      if(idx>=0) return idx;
+    }
+    return -1;
+  }
+  const colDate = findCol(['DATA','DATE']);
+  const colHist = findCol(['HISTORICO','HISTÓRICO','HISTORY','HIST']);
+  const colCredit = findCol(['CREDITO','CRED·','CREDIT','CREDITO (R$)'.toUpperCase()]);
+  const colDebit = findCol(['DEBITO','DEBIT','DEBITO (R$)'.toUpperCase()]);
+
+  // walk lines after headerIdx; merge continuation lines
+  const txs = [];
+  let pending = null;
+  for(let i = headerIdx + 1; i < lines.length; i++){
+    const raw = lines[i];
+    if(!raw) continue;
+    const cols = splitCsvLine(raw, sep).map(c=>c.trim());
+    const first = cols[colDate] || cols[0] || '';
+    if(isDateCell(first)){
+      // new record
+      if(pending) txs.push(pending);
+      const dateRaw = cols[colDate] || first;
+      const hist = (cols[colHist] || cols[1] || '').trim();
+      const credit = cols[colCredit] || '';
+      const debit = cols[colDebit] || '';
+      pending = {
+        date: dateRaw,
+        hist: hist,
+        creditRaw: credit,
+        debitRaw: debit,
+        rawIndex: txs.length
+      };
+    } else {
+      // continuation: append to pending.hist
+      if(pending){
+        const more = cols.join(' ').trim();
+        pending.hist = (pending.hist + ' ' + more).trim();
+      } else {
+        // stray line - push as minimal
+        txs.push({date:null,hist:raw,creditRaw:'',debitRaw:'',rawIndex:txs.length});
+      }
+    }
+  }
+  if(pending) txs.push(pending);
+
+  // normalize
+  return txs.map(t=>{
+    const d = parseDateBr(t.date);
+    return {
+      dateObj: d,
+      date: d ? d.toISOString().slice(0,10) : null,
+      hist: t.hist || '',
+      credit: moneyToNumber(t.creditRaw),
+      debit: moneyToNumber(t.debitRaw),
+      raw: t
+    };
+  });
+}
+
+/* --------------------
+   App state
+   -------------------- */
+let transactions = []; // parsed txs
+let visibleIndex = 0;   // pagination pointer
+const PAGE_SIZE = 20;
+
+/* --------------------
+   UI wiring
+   -------------------- */
+const fileInput = document.getElementById('fileInput');
+const accordion = document.getElementById('accordion');
+const loadMoreBtn = document.getElementById('loadMore');
+const totalInEl = document.getElementById('totalIn');
+const totalOutEl = document.getElementById('totalOut');
+const saldoEl = document.getElementById('saldo');
+const searchName = document.getElementById('searchName');
+const applyFilter = document.getElementById('applyFilter');
+const clearFilter = document.getElementById('clearFilter');
+const topN = document.getElementById('topN');
+const topCount = document.getElementById('topCount');
+const toggleTheme = document.getElementById('toggleTheme');
+const exportBackup = document.getElementById('exportBackup');
+const importBackupBtn = document.getElementById('importBackupBtn');
+const importBtn = document.getElementById('importBackupBtn');
+const clearStorage = document.getElementById('clearStorage');
+const modal = document.getElementById('modal');
+const modalBox = document.getElementById('modalBox');
+
+loadAliases();
+document.body.classList.remove('light'); // default dark
+
+toggleTheme.onclick = () => {
+  document.body.classList.toggle('light');
+};
+
+/* --------------------
+   Chart setup
+   -------------------- */
+let dailyChart=null, monthChart=null, barChart=null;
+function createCharts(){
+  // destroy if exists
+  if(dailyChart) dailyChart.destroy();
+  if(monthChart) monthChart.destroy();
+  if(barChart) barChart.destroy();
+
+  const ctxD = document.getElementById('dailyChart').getContext('2d');
+  dailyChart = new Chart(ctxD, {
+    type:'line',
+    data:{datasets:[]},
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{x:{type:'time',time:{unit:'day'}},y:{beginAtZero:false}},
+      elements:{point:{radius:0}}
+    }
+  });
+
+  const ctxM = document.getElementById('monthChart').getContext('2d');
+  monthChart = new Chart(ctxM,{type:'bar',data:{datasets:[]},options:{plugins:{legend:{display:false}},scales:{x:{type:'time',time:{unit:'month'}},y:{beginAtZero:true}}}});
+
+  const ctxB = document.getElementById('barChart').getContext('2d');
+  barChart = new Chart(ctxB,{type:'bar',data:{labels:[],datasets:[]},options:{indexAxis:'y',plugins:{legend:{display:false}}}});
+}
+createCharts();
+
+/* --------------------
+   Render functions
+   -------------------- */
+function renderSummary(){
+  const totalIn = transactions.reduce((s,t)=>s + (t.credit||0),0);
+  const totalOut = transactions.reduce((s,t)=>s + (t.debit||0),0);
+  const saldo = totalIn - totalOut;
+  totalInEl.textContent = fmtBR(totalIn);
+  totalOutEl.textContent = fmtBR(totalOut);
+  saldoEl.textContent = fmtBR(saldo);
+}
+
+/* charts data aggregation simple */
+function renderCharts(){
+  // daily: sum credits-debits by day
+  const byDay = {};
+  transactions.forEach(t=>{
+    if(!t.dateObj) return;
+    const k = t.dateObj.toISOString().slice(0,10);
+    byDay[k] = (byDay[k]||0) + (t.credit - t.debit);
+  });
+  const dayKeys = Object.keys(byDay).sort();
+  const dayData = dayKeys.map(k=>({x:k,y:byDay[k]}));
+  dailyChart.data.datasets = [{label:'dia',data:dayData, borderColor:'var(--accent)', backgroundColor:'transparent', tension:0.2}];
+  dailyChart.update();
+
+  // month aggregation
+  const byMonth = {};
+  transactions.forEach(t=>{
+    if(!t.dateObj) return;
+    const m = t.dateObj.getFullYear() + '-' + String(t.dateObj.getMonth()+1).padStart(2,'0');
+    byMonth[m] = byMonth[m] || {in:0,out:0};
+    byMonth[m].in += t.credit;
+    byMonth[m].out += t.debit;
+  });
+  const months = Object.keys(byMonth).sort();
+  monthChart.data.datasets = [
+    {label:'Entradas', data: months.map(m=>({x:m+'-01', y: byMonth[m].in})), backgroundColor: window.getComputedStyle(document.documentElement).getPropertyValue('--green')||'#10B981'},
+    {label:'Saídas', data: months.map(m=>({x:m+'-01', y: byMonth[m].out})), backgroundColor: window.getComputedStyle(document.documentElement).getPropertyValue('--red')||'#EF4444'}
+  ];
+  monthChart.update();
+
+  // Top N by net balance of hist/alias
+  const topMap={};
+  transactions.forEach(t=>{
+    const key = applyAlias(t.hist) || t.hist || 'Desconhecido';
+    topMap[key] = topMap[key] || 0;
+    topMap[key] += (t.credit - t.debit);
+  });
+  const arr = Object.entries(topMap).map(([k,v])=>({k,v})).sort((a,b)=>Math.abs(b.v)-Math.abs(a.v));
+  const N = parseInt(topN.value||15,10);
+  topCount.textContent = N;
+  const topSlice = arr.slice(0,N);
+  barChart.data.labels = topSlice.map(x=>x.k);
+  barChart.data.datasets = [{data: topSlice.map(x=>x.v), backgroundColor: topSlice.map(x=> x.v>=0 ? getComputedStyle(document.documentElement).getPropertyValue('--green') : getComputedStyle(document.documentElement).getPropertyValue('--red'))}];
+  barChart.update();
+}
+
+/* heatmap simple */
+function renderHeatmap(){
+  const hm = document.getElementById('heatmap');
+  hm.innerHTML='';
+  // group by day count
+  const counts = {};
+  transactions.forEach(t=>{
+    if(!t.dateObj) return;
+    const k = t.dateObj.toISOString().slice(0,10);
+    counts[k] = (counts[k]||0) + 1;
+  });
+  // create last 365 days boxes
+  const today = new Date();
+  for(let i=364;i>=0;i--){
+    const d = new Date(today); d.setDate(today.getDate()-i);
+    const k = d.toISOString().slice(0,10);
+    const c = counts[k] || 0;
+    const div = document.createElement('div');
+    div.className = 'heat-cell';
+    if(c>=4) div.style.background = 'rgba(6,182,212,0.9)';
+    else if(c>=2) div.style.background = 'rgba(6,182,212,0.6)';
+    else if(c===1) div.style.background = 'rgba(6,182,212,0.3)';
+    div.title = k + ' — ' + (c) + ' tx';
+    div.ondblclick = ()=> showModal(`<h4>${k}</h4><div>Transações: ${c}</div>`);
+    hm.appendChild(div);
+  }
+}
+
+/* accordion (paginated) */
+function renderAccordion(reset=false){
+  if(reset) visibleIndex = 0;
+  const batch = transactions.slice(visibleIndex, visibleIndex + PAGE_SIZE);
+  if(visibleIndex===0) accordion.innerHTML='';
+  batch.forEach(t=>{
+    const item = document.createElement('div');
+    item.className='accordion-item';
+    const date = t.dateObj ? t.dateObj.toLocaleDateString() : '--';
+    item.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div class="small">${date}</div><div class="tx-hist">${escapeHtml(applyAlias(t.hist))}</div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="tx-amount">${t.credit?fmtBR(t.credit):''}</div>
+      <div class="tx-amount">${t.debit?fmtBR(t.debit):''}</div>
+      <button class="btn-ghost" onclick="showModalForTx(${t.raw.rawIndex})">✎</button>
+    </div>`;
+    accordion.appendChild(item);
+  });
+  visibleIndex += batch.length;
+  loadMoreBtn.style.display = visibleIndex < transactions.length ? 'inline-block' : 'none';
+}
+
+/* --------------------
+   Modal helpers
+   -------------------- */
+function showModal(html){
+  modalBox.innerHTML = html + `<div style="margin-top:12px; text-align:right"><button class="btn" onclick="closeModal()">Fechar</button></div>`;
+  modal.classList.add('active');
+}
+function closeModal(){ modal.classList.remove('active'); modalBox.innerHTML=''; }
+window.showModal = showModal;
+window.closeModal = closeModal;
+
+function showModalForTx(idx){
+  const t = transactions.find(x=>x.raw.rawIndex===idx);
+  if(!t) return;
+  showModal(`<h4>Editar Transação</h4>
+  <div class="kv"><label class="small">Data</label><input id="m_date" type="date" value="${t.date||''}"/></div>
+  <div class="kv"><label class="small">Histórico</label><input id="m_hist" type="text" value="${escapeHtml(t.hist)}"/></div>
+  <div class="kv"><label class="small">Crédito</label><input id="m_credit" type="text" value="${t.credit||''}"/></div>
+  <div class="kv"><label class="small">Débito</label><input id="m_debit" type="text" value="${t.debit||''}"/></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn-ghost" onclick="deleteTx(${idx})">Remover</button>
+    <button class="btn" onclick="saveTx(${idx})">Salvar</button>
+  </div>`);
+}
+
+function deleteTx(idx){
+  transactions = transactions.filter(x=>x.raw.rawIndex!==idx);
+  closeModal(); refreshAll();
+}
+function saveTx(idx){
+  const t = transactions.find(x=>x.raw.rawIndex===idx);
+  if(!t) return;
+  const dd = document.getElementById('m_date').value;
+  const hh = document.getElementById('m_hist').value;
+  const cc = moneyToNumber(document.getElementById('m_credit').value);
+  const ddt = moneyToNumber(document.getElementById('m_debit').value);
+  t.date = dd || t.date;
+  t.dateObj = dd ? new Date(dd) : t.dateObj;
+  t.hist = hh;
+  t.credit = cc;
+  t.debit = ddt;
+  closeModal(); refreshAll();
+}
+
+/* --------------------
+   Utilities & events
+   -------------------- */
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function handleFileSelect(e){
+  const f = e.target.files[0];
+  if(!f) return;
+  transactions = await parserBradesco(f);
+  // set rawIndex unique
+  transactions.forEach((t,i)=> t.raw.rawIndex = i);
+  visibleIndex = 0;
+  refreshAll();
+}
+
+fileInput.addEventListener('change', handleFileSelect);
+
+loadMoreBtn.addEventListener('click', ()=> renderAccordion(false));
+
+applyFilter.addEventListener('click', ()=>{
+  // naive filter: just filter by searchName and date range
+  const q = searchName.value.trim().toLowerCase();
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  const ff = transactions.filter(t=>{
+    if(q && !(applyAlias(t.hist).toLowerCase().includes(q) || t.hist.toLowerCase().includes(q))) return false;
+    if(from && (!t.date || t.date < from)) return false;
+    if(to && (!t.date || t.date > to)) return false;
+    return true;
+  });
+  // show filtered in "view" (we'll shadow original)
+  // For simplicity, we replace transactions view with filtered snapshot (non-destructive)
+  transactions = ff;
+  visibleIndex = 0;
+  refreshAll();
+});
+clearFilter.addEventListener('click', ()=> { location.reload(); });
+
+topN.addEventListener('change', ()=> { renderCharts(); });
+
+exportBackup.addEventListener('click', ()=>{
+  const payload = {aliases, transactions};
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'biru_backup.json'; a.click(); URL.revokeObjectURL(url);
+});
+
+importBackupBtn.addEventListener('click', async ()=>{
+  const f = await pickFile();
+  if(!f) return;
+  const txt = await f.text();
+  try{
+    const payload = JSON.parse(txt);
+    if(payload.aliases) aliases = payload.aliases;
+    if(payload.transactions) transactions = payload.transactions.map((t,i)=>({...t, dateObj: t.date ? new Date(t.date) : null, raw:{rawIndex:i}}));
+    saveAliases();
+    refreshAll();
+    alert('Backup importado');
+  }catch(e){ alert('Erro ao importar backup'); }
+});
+
+clearStorage.addEventListener('click', ()=>{
+  localStorage.removeItem(ALIAS_KEY);
+  alert('Storage limpo (aliases)');
+  loadAliases();
+});
+
+/* file picker util for import backup */
+async function pickFile(){
+  return new Promise(res=>{
+    const ip = document.createElement('input');
+    ip.type='file'; ip.accept='.json';
+    ip.onchange = ()=> res(ip.files[0]);
+    ip.click();
+  });
+}
+
+/* refresh everything */
+function refreshAll(){
+  renderSummary();
+  renderCharts();
+  renderHeatmap();
+  renderAccordion(true);
+}
+
+/* small demo helper: load example CSV (only when you're testing) */
+function loadExample(){
+  const example = `DATA;HISTORICO;CREDITO (R$);DEBITO (R$)
+01/10/2025;SALDO INICIAL;; 
+02/10/2025;PGTO PIX - CARLOS;1200,00;
+02/10/2025;CONTINUACAO DA MEMO LINE;; 
+03/10/2025;SUPERMERCADO;;150,50
+05/10/2025;SALARIO;3500,00;
+07/10/2025;TRANSFERENCIA MARIA;;200,00
+`;
+  const blob = new Blob([example],{type:'text/csv'});
+  const f = new File([blob],'example.csv',{type:'text/csv'});
+  parserBradesco(f).then(arr=>{
+    transactions = arr.map((t,i)=>({...t, raw:{rawIndex:i}}));
+    refreshAll();
+  });
+}
+// auto load example for convenience (remove in production)
+loadExample();
+
+/* escape hatch: click outside modal closes */
+modal.addEventListener('click', (ev)=>{ if(ev.target === modal) closeModal(); });
+
+</script>
+</body>
+</html>
